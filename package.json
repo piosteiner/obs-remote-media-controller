@@ -1,0 +1,13 @@
+{
+  "name": "obs-remote-media-controller",
+  "version": "1.0.0",
+  "description": "OBS Remote Media Controller - Frontend (Local)",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "install:frontend": "cd frontend && npm install"
+  },
+  "keywords": ["obs", "media", "controller", "websocket", "streaming"],
+  "author": "Pio Steiner",
+  "license": "MIT"
+}

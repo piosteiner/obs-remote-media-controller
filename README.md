@@ -61,56 +61,39 @@
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### For Users (After Deployment)
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
-- **OBS Studio** 28+ ([Download](https://obsproject.com/))
-- A web server (local or cloud) for hosting
+1. **Access Control Panel**
+   - Visit: `https://obs-media-control.piogino.ch/control`
+   - From any device (iPad, phone, laptop)
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/piosteiner/obs-remote-media-controller.git
-   cd obs-remote-media-controller
-   ```
-
-2. **Set up the backend**
-   ```bash
-   cd backend
-   npm install
-   cp .env.example .env
-   # Edit .env with your configuration
-   npm start
-   ```
-
-3. **Set up the frontend**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-4. **Configure OBS**
-   - Add a Browser Source in OBS
+2. **Configure OBS**
+   - Add Browser Source in OBS
    - URL: `https://obs-media-control.piogino.ch/display?slot=1`
-   - Width: 1920, Height: 1080 (or your canvas size)
+   - Width: 1920, Height: 1080 (your canvas size)
    - Check "Shutdown source when not visible"
 
-5. **Open Control Panel**
-   - Navigate to `https://obs-media-control.piogino.ch/control`
-   - Upload an image or paste a URL
-   - Watch it appear in OBS!
+3. **Upload & Control**
+   - Upload images or paste URLs
+   - Watch them appear in OBS instantly!
+
+### For Deployment
+
+See detailed guides:
+- **[GitHub Pages Setup](GITHUB_PAGES_SETUP.md)** - Deploy frontend (5 minutes)
+- **[Backend Deployment](backend/DEPLOY.md)** - Deploy backend to VPS
 
 ---
 
 ## 📖 Documentation
 
-- **[Project Plan](PROJECT_PLAN.md)** - Complete project roadmap and architecture
-- **[Setup Guide](docs/SETUP.md)** - Detailed setup instructions *(coming soon)*
-- **[API Reference](docs/API.md)** - API documentation *(coming soon)*
-- **[User Guide](docs/USER_GUIDE.md)** - How to use all features *(coming soon)*
-- **[Architecture](docs/ARCHITECTURE.md)** - Technical architecture details *(coming soon)*
+- **[GitHub Pages Setup](GITHUB_PAGES_SETUP.md)** - Deploy frontend in 5 minutes
+- **[Backend Deployment](backend/DEPLOY.md)** - Deploy backend to VPS
+- **[Frontend Deployment Guide](frontend/DEPLOY.md)** - Detailed frontend deployment options
+- **[Project Plan](PROJECT_PLAN.md)** - Complete project roadmap
+- **[Architecture](docs/ARCHITECTURE.md)** - Technical architecture details
+- **[API Reference](docs/API.md)** - Complete API documentation
+- **[Backend Code Review](docs/BACKEND_REVIEW.md)** - Code quality assessment (96/100)
 
 ---
 
@@ -145,21 +128,40 @@
 
 ```
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│   Your iPad/    │◄───────►│  Cloud Server    │◄───────►│  OBS Machine    │
-│   Phone         │  HTTPS  │                  │WebSocket│  (Laptop)       │
-│                 │         │  - Backend API   │         │                 │
-│  Control Panel  │         │  - Frontend      │         │  Browser Source │
-└─────────────────┘         │  - WebSocket     │         │  (Display Page) │
-                            │  - Image Storage │         └─────────────────┘
+│   Your iPad/    │         │  GitHub Pages    │         │  OBS Machine    │
+│   Phone         │◄───────►│  (Frontend)      │◄───────►│  (Laptop)       │
+│                 │  HTTPS  │                  │WebSocket│                 │
+│  Control Panel  │         │  obs-media-      │         │  Browser Source │
+│                 │         │  control.piogino │         │  (Display Page) │
+│                 │         │  .ch             │         │                 │
+└─────────────────┘         └────────┬─────────┘         └─────────────────┘
+                                     │
+                                     │ HTTPS/WSS
+                                     ▼
+                            ┌──────────────────┐
+                            │  Infomaniak VPS  │
+                            │  (Backend)       │
+                            │  83.228.207.199  │
+                            │                  │
+                            │  - API Server    │
+                            │  - WebSocket     │
+                            │  - Image Storage │
                             └──────────────────┘
 ```
 
+**Deployment:**
+- **Frontend**: GitHub Pages at `obs-media-control.piogino.ch` (Free!)
+- **Backend**: Infomaniak VPS at `83.228.207.199` or `api.piogino.ch`
+- **OBS**: Reads from GitHub Pages frontend (Browser Source)
+- **Control**: Access from any device via GitHub Pages URL
+
 **How it works:**
-1. You control media from any device via the web interface
-2. Changes are sent to the cloud server
-3. Server broadcasts updates via WebSocket
-4. OBS Browser Sources receive updates and display new media
-5. All happens in real-time (200-500ms)
+1. **Frontend** deployed to GitHub Pages (free hosting!)
+2. **Backend** runs on your Infomaniak VPS (83.228.207.199)
+3. Control from any device via `obs-media-control.piogino.ch`
+4. Backend API at `api.piogino.ch` (or direct IP)
+5. OBS Browser Sources point to GitHub Pages display URLs
+6. All updates happen in real-time via WebSocket (200-500ms)
 
 ---
 
@@ -178,10 +180,12 @@
 - Socket.io-client
 
 ### Deployment
-- Cloud Server (backend)
-- GitHub Pages (frontend option)
-- Nginx (reverse proxy)
-- PM2 (process manager)
+- **Frontend**: GitHub Pages (free hosting)
+- **Backend**: Infomaniak VPS (your existing server)
+- **Domain**: obs-media-control.piogino.ch
+- Nginx reverse proxy
+- PM2 process manager
+- Let's Encrypt SSL
 
 ---
 
@@ -203,25 +207,28 @@
 
 ## 🎯 Current Status
 
-**Version:** 1.0.0 (In Development)  
-**Status:** 🚧 Planning & Initial Development
+**Version:** 1.0.0  
+**Status:** ✅ Ready for Deployment
 
 ### Completed
-- ✅ Project planning and architecture design
-- ✅ Repository setup
-- ✅ Documentation framework
+- ✅ Complete project architecture
+- ✅ Frontend fully implemented (React + Vite)
+- ✅ Backend fully implemented (Node.js + Express)
+- ✅ WebSocket real-time updates
+- ✅ GitHub Actions deployment workflow
+- ✅ Comprehensive documentation
+- ✅ Backend code reviewed (96/100 score)
 
-### In Progress
-- ⏳ Backend API development
-- ⏳ Frontend UI development
-- ⏳ WebSocket implementation
+### Ready to Deploy
+- 🚀 Frontend to GitHub Pages (automated)
+- 🚀 Backend to Infomaniak VPS
+- � DNS configuration
+- � SSL certificates
 
-### Coming Soon
-- 🔜 MVP release
-- 🔜 Deployment to production
-- 🔜 User testing and feedback
+### Coming in v1.1
 - 🔜 Video support
 - 🔜 Authentication system
+- 🔜 Advanced scene features
 
 ---
 

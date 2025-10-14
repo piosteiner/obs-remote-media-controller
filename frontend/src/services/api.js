@@ -1,9 +1,12 @@
 import axios from 'axios'
 
+// Get backend API URL from environment or default to proxy in dev
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.PROD 
-    ? 'https://obs-media-control.piogino.ch/api'
+    ? `${API_BASE_URL}/api`
     : '/api',
   timeout: 10000,
   headers: {
