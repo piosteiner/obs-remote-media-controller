@@ -93,12 +93,12 @@
 
 4. **Configure OBS**
    - Add a Browser Source in OBS
-   - URL: `http://localhost:3000/display?slot=1`
+   - URL: `https://obs-media-control.piogino.ch/display?slot=1`
    - Width: 1920, Height: 1080 (or your canvas size)
    - Check "Shutdown source when not visible"
 
 5. **Open Control Panel**
-   - Navigate to `http://localhost:3000/control`
+   - Navigate to `https://obs-media-control.piogino.ch/control`
    - Upload an image or paste a URL
    - Watch it appear in OBS!
 
@@ -255,7 +255,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Issues:** [GitHub Issues](https://github.com/piosteiner/obs-remote-media-controller/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/piosteiner/obs-remote-media-controller/discussions)
-- **Website:** [obs-media-control.piogino.ch](https://obs-media-control.piogino.ch)
+- **Website:** [https://obs-media-control.piogino.ch](https://obs-media-control.piogino.ch)
 
 ---
 
