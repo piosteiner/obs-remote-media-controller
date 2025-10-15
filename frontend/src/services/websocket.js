@@ -12,18 +12,29 @@ class WebSocketService {
     // Get backend URL from environment
     const backendURL = import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_BASE_URL
     
-    // Use relative path for proxy in development, backend URL in production
-    const url = import.meta.env.PROD && backendURL
-      ? backendURL
-      : '/'
-
-    this.socket = io(url, {
+    // In production, use full backend URL
+    // In development, use relative path for Vite proxy
+    let url = '/'
+    let socketOptions = {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: this.maxReconnectAttempts,
       transports: ['websocket', 'polling'],
-    })
+    }
+
+    if (import.meta.env.PROD && backendURL) {
+      // Extract base URL and path
+      // e.g., "wss://api.piogino.ch/obs" -> url: "wss://api.piogino.ch", path: "/obs/socket.io/"
+      const urlObj = new URL(backendURL.replace('wss://', 'https://'))
+      url = `wss://${urlObj.host}`
+      
+      if (urlObj.pathname && urlObj.pathname !== '/') {
+        socketOptions.path = urlObj.pathname + '/socket.io/'
+      }
+    }
+
+    this.socket = io(url, socketOptions)
 
     this.setupListeners()
   }
