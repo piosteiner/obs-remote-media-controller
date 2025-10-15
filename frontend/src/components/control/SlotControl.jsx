@@ -13,7 +13,9 @@ function SlotControl({ slotId, slotData }) {
   const [urlInput, setUrlInput] = useState('')
   const [uploading, setUploading] = useState(false)
   const [clipboardSupported, setClipboardSupported] = useState(false)
+  const [showPasteArea, setShowPasteArea] = useState(false)
   const fileInputRef = useRef(null)
+  const pasteAreaRef = useRef(null)
 
   const { imageUrl, updatedAt } = slotData
 
@@ -25,6 +27,41 @@ function SlotControl({ slotId, slotData }) {
       typeof navigator.clipboard.read === 'function'
     )
   }, [])
+
+  // Handle paste event
+  useEffect(() => {
+    const handlePaste = async (e) => {
+      if (!showPasteArea) return
+      
+      e.preventDefault()
+      const items = e.clipboardData?.items
+      
+      if (!items) return
+      
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile()
+          if (blob) {
+            const file = new File([blob], `pasted-${Date.now()}.png`, { type: blob.type })
+            await uploadFile(file)
+            setShowPasteArea(false)
+            return
+          }
+        }
+      }
+      
+      useToastStore.getState().warning('No image found in clipboard. Please copy an image first.')
+    }
+
+    if (showPasteArea && pasteAreaRef.current) {
+      pasteAreaRef.current.addEventListener('paste', handlePaste)
+      pasteAreaRef.current.focus()
+      
+      return () => {
+        pasteAreaRef.current?.removeEventListener('paste', handlePaste)
+      }
+    }
+  }, [showPasteArea])
 
   // Handle URL input
   const handleUrlSubmit = async (e) => {
@@ -58,36 +95,46 @@ function SlotControl({ slotId, slotData }) {
     try {
       setUploading(true)
       
-      // Read clipboard
-      const clipboardItems = await navigator.clipboard.read()
-      
-      // Find image in clipboard
-      let imageFile = null
-      for (const item of clipboardItems) {
-        const imageType = item.types.find(type => type.startsWith('image/'))
-        if (imageType) {
-          const blob = await item.getType(imageType)
-          // Convert blob to File with proper name
-          imageFile = new File([blob], `clipboard-${Date.now()}.png`, { type: imageType })
-          break
+      // Try modern Clipboard API first
+      if (navigator.clipboard && navigator.clipboard.read) {
+        try {
+          const clipboardItems = await navigator.clipboard.read()
+          
+          // Find image in clipboard
+          let imageFile = null
+          for (const item of clipboardItems) {
+            const imageType = item.types.find(type => type.startsWith('image/'))
+            if (imageType) {
+              const blob = await item.getType(imageType)
+              imageFile = new File([blob], `clipboard-${Date.now()}.png`, { type: imageType })
+              break
+            }
+          }
+
+          if (!imageFile) {
+            useToastStore.getState().info('No image in clipboard. Try: Copy an image, then click Paste again.')
+            setUploading(false)
+            return
+          }
+
+          await uploadFile(imageFile)
+          return
+        } catch (clipboardError) {
+          // If clipboard.read() fails, fall back to paste event approach
+          console.log('Clipboard API failed, trying paste event approach:', clipboardError)
         }
       }
-
-      if (!imageFile) {
-        useToastStore.getState().warning('No image found in clipboard. Please copy an image first.')
-        return
-      }
-
-      await uploadFile(imageFile)
+      
+      // Fallback: Show paste area for Ctrl+V
+      setShowPasteArea(true)
+      useToastStore.getState().info('Click in the blue box below, then press Ctrl+V (Cmd+V on Mac) to paste.')
+      setUploading(false)
       
     } catch (error) {
       console.error('Failed to paste from clipboard:', error)
-      if (error.name === 'NotAllowedError') {
-        useToastStore.getState().error('Clipboard access denied. Please grant permission to paste images.')
-      } else {
-        useToastStore.getState().error('Failed to paste image. Please try uploading or using a URL instead.')
-      }
-    } finally {
+      // Always offer the paste area as fallback
+      setShowPasteArea(true)
+      useToastStore.getState().info('Click in the blue box below, then press Ctrl+V (Cmd+V on Mac) to paste.')
       setUploading(false)
     }
   }
@@ -179,6 +226,28 @@ function SlotControl({ slotId, slotData }) {
 
       {/* Actions */}
       <div className="space-y-2">
+        {/* Paste Area */}
+        {showPasteArea && (
+          <div className="relative">
+            <div
+              ref={pasteAreaRef}
+              contentEditable
+              tabIndex={0}
+              className="w-full px-4 py-8 border-2 border-dashed border-blue-400 bg-blue-50 rounded-lg text-center text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-text"
+            >
+              <Clipboard className="w-8 h-8 mx-auto mb-2" />
+              <p className="font-medium">Click here and press Ctrl+V (⌘+V on Mac)</p>
+              <p className="text-sm mt-1">Paste your image from clipboard</p>
+            </div>
+            <button
+              onClick={() => setShowPasteArea(false)}
+              className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm hover:bg-gray-100"
+            >
+              <X className="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
+        )}
+
         {/* URL Input */}
         {showUrlInput ? (
           <form onSubmit={handleUrlSubmit} className="flex space-x-2">
