@@ -77,16 +77,13 @@ function Library() {
   const loadImages = async () => {
     try {
       setLoading(true)
-      // Uncomment when backend is ready
-      // const result = await imagesAPI.getAll()
-      // if (result.success) {
-      //   setImages(result.data.images)
-      // }
-      
-      // Mock data for now
-      setImages([])
+      const result = await imagesAPI.getAll()
+      if (result.success) {
+        setImages(result.data.images)
+      }
     } catch (error) {
       console.error('Failed to load images:', error)
+      useToastStore.getState().error('Failed to load images from library')
     } finally {
       setLoading(false)
     }
