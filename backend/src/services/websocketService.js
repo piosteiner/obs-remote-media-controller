@@ -1,3 +1,5 @@
+const storage = require('./storage');
+
 // In-memory slot state (or load from database)
 const slots = {};
 
@@ -44,32 +46,44 @@ module.exports = (io) => {
     socket.on('scene:load', async (data) => {
       const { sceneId } = data;
       
-      // Load scene from database
-      // const scene = await Scene.findById(sceneId)
-      
-      // Mock scene data for now
-      const scene = {
-        id: sceneId,
-        name: 'Test Scene',
-        slots: {
-          '1': { imageUrl: 'https://via.placeholder.com/1920x1080', imageId: 1 },
-          '2': { imageUrl: null, imageId: null },
+      try {
+        // Load scene from persistent storage
+        const scenes = await storage.getScenes();
+        const scene = scenes.find(s => s.id === parseInt(sceneId));
+        
+        if (!scene) {
+          socket.emit('error', {
+            message: 'Scene not found',
+            sceneId
+          });
+          console.error(`❌ Scene ${sceneId} not found`);
+          return;
         }
-      };
 
-      // Update slots
-      Object.entries(scene.slots).forEach(([slotId, slotData]) => {
-        slots[slotId] = slotData;
-      });
+        // Update global slots (merge with existing)
+        global.slots = global.slots || {};
+        Object.entries(scene.slots).forEach(([slotId, slotData]) => {
+          if (slotData && (slotData.imageId || slotData.imageUrl)) {
+            global.slots[slotId] = slotData;
+          }
+        });
 
-      // Broadcast to all clients
-      io.emit('scene:loaded', {
-        sceneId: scene.id,
-        sceneName: scene.name,
-        slots: scene.slots,
-      });
+        // Broadcast to all clients
+        io.emit('scene:loaded', {
+          sceneId: scene.id,
+          sceneName: scene.name,
+          slots: scene.slots,
+          allSlots: global.slots
+        });
 
-      console.log(`🎬 Scene ${sceneId} loaded`);
+        console.log(`🎬 Scene ${sceneId} loaded: ${scene.name}`);
+      } catch (error) {
+        console.error('Error loading scene:', error);
+        socket.emit('error', {
+          message: 'Failed to load scene',
+          error: error.message
+        });
+      }
     });
 
     // Handle slot clear
