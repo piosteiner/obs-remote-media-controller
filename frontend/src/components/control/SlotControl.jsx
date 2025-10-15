@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
-import { Link as LinkIcon, Upload, X, Image as ImageIcon } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Link as LinkIcon, Upload, X, Image as ImageIcon, Clipboard } from 'lucide-react'
 import { slotsAPI, imagesAPI } from '../../services/api'
 import websocketService from '../../services/websocket'
 import useStore from '../../store'
+import useToastStore from '../../store/toast'
 
 function SlotControl({ slotId, slotData }) {
   const clearSlot = useStore(state => state.clearSlot)
@@ -11,9 +12,19 @@ function SlotControl({ slotId, slotData }) {
   const [showUrlInput, setShowUrlInput] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [clipboardSupported, setClipboardSupported] = useState(false)
   const fileInputRef = useRef(null)
 
   const { imageUrl, updatedAt } = slotData
+
+  // Check if clipboard API is supported
+  useEffect(() => {
+    setClipboardSupported(
+      typeof navigator !== 'undefined' && 
+      navigator.clipboard && 
+      typeof navigator.clipboard.read === 'function'
+    )
+  }, [])
 
   // Handle URL input
   const handleUrlSubmit = async (e) => {
@@ -27,9 +38,10 @@ function SlotControl({ slotId, slotData }) {
       
       setUrlInput('')
       setShowUrlInput(false)
+      useToastStore.getState().success(`Slot ${slotId} updated successfully`)
     } catch (error) {
       console.error('Failed to update slot:', error)
-      alert('Failed to update slot. Please try again.')
+      useToastStore.getState().error('Failed to update slot. Please try again.')
     }
   }
 
@@ -38,6 +50,50 @@ function SlotControl({ slotId, slotData }) {
     const file = e.target.files?.[0]
     if (!file) return
 
+    await uploadFile(file)
+  }
+
+  // Handle clipboard paste
+  const handlePasteFromClipboard = async () => {
+    try {
+      setUploading(true)
+      
+      // Read clipboard
+      const clipboardItems = await navigator.clipboard.read()
+      
+      // Find image in clipboard
+      let imageFile = null
+      for (const item of clipboardItems) {
+        const imageType = item.types.find(type => type.startsWith('image/'))
+        if (imageType) {
+          const blob = await item.getType(imageType)
+          // Convert blob to File with proper name
+          imageFile = new File([blob], `clipboard-${Date.now()}.png`, { type: imageType })
+          break
+        }
+      }
+
+      if (!imageFile) {
+        useToastStore.getState().warning('No image found in clipboard. Please copy an image first.')
+        return
+      }
+
+      await uploadFile(imageFile)
+      
+    } catch (error) {
+      console.error('Failed to paste from clipboard:', error)
+      if (error.name === 'NotAllowedError') {
+        useToastStore.getState().error('Clipboard access denied. Please grant permission to paste images.')
+      } else {
+        useToastStore.getState().error('Failed to paste image. Please try uploading or using a URL instead.')
+      }
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Common upload logic
+  const uploadFile = async (file) => {
     try {
       setUploading(true)
       
@@ -54,10 +110,11 @@ function SlotControl({ slotId, slotData }) {
           imageUrl: imageUrl 
         })
         websocketService.updateSlot(slotId, imageUrl, uploadedImage.id)
+        useToastStore.getState().success(`Image uploaded to Slot ${slotId}`)
       }
     } catch (error) {
       console.error('Failed to upload image:', error)
-      alert('Failed to upload image. Please try again.')
+      useToastStore.getState().error('Failed to upload image. Please try again.')
     } finally {
       setUploading(false)
       if (fileInputRef.current) {
@@ -151,13 +208,13 @@ function SlotControl({ slotId, slotData }) {
             </button>
           </form>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setShowUrlInput(true)}
               className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-primary-400 hover:text-primary-600 transition-colors"
             >
               <LinkIcon className="w-4 h-4" />
-              <span>Paste URL</span>
+              <span>URL</span>
             </button>
             
             <button
@@ -166,8 +223,20 @@ function SlotControl({ slotId, slotData }) {
               className="flex items-center justify-center space-x-2 px-4 py-3 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Upload className="w-4 h-4" />
-              <span>{uploading ? 'Uploading...' : 'Upload'}</span>
+              <span>Upload</span>
             </button>
+
+            {clipboardSupported && (
+              <button
+                onClick={handlePasteFromClipboard}
+                disabled={uploading}
+                className="flex items-center justify-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Paste image from clipboard"
+              >
+                <Clipboard className="w-4 h-4" />
+                <span>Paste</span>
+              </button>
+            )}
             
             <input
               ref={fileInputRef}

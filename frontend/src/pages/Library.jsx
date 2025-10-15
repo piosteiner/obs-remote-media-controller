@@ -4,6 +4,7 @@ import Header from '../components/common/Header'
 import { imagesAPI, slotsAPI } from '../services/api'
 import websocketService from '../services/websocket'
 import useStore from '../store'
+import useToastStore from '../store/toast'
 
 /**
  * Library Page - Image library management
@@ -56,10 +57,10 @@ function Library() {
         }
       }
       
-      alert(`Successfully uploaded ${files.length} image(s)`)
+      useToastStore.getState().success(`Successfully uploaded ${files.length} image(s)`)
     } catch (error) {
       console.error('Failed to upload images:', error)
-      alert('Failed to upload one or more images')
+      useToastStore.getState().error('Failed to upload one or more images')
     } finally {
       setUploading(false)
       if (fileInputRef.current) {
@@ -74,9 +75,10 @@ function Library() {
     try {
       await imagesAPI.delete(imageId)
       deleteImage(imageId)
+      useToastStore.getState().success('Image deleted successfully')
     } catch (error) {
       console.error('Failed to delete image:', error)
-      alert('Failed to delete image')
+      useToastStore.getState().error('Failed to delete image')
     }
   }
 
@@ -90,10 +92,10 @@ function Library() {
         imageUrl: image.url
       })
       websocketService.updateSlot(slotId, image.url, image.id)
-      alert(`Image assigned to Slot ${slotId}`)
+      useToastStore.getState().success(`Image assigned to Slot ${slotId}`)
     } catch (error) {
       console.error('Failed to assign image:', error)
-      alert('Failed to assign image to slot')
+      useToastStore.getState().error('Failed to assign image to slot')
     }
   }
 

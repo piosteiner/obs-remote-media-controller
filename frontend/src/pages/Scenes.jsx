@@ -4,6 +4,7 @@ import Header from '../components/common/Header'
 import { scenesAPI } from '../services/api'
 import websocketService from '../services/websocket'
 import useStore from '../store'
+import useToastStore from '../store/toast'
 
 /**
  * Scenes Page - Manage scene presets
@@ -77,7 +78,7 @@ function Scenes() {
 
     // Mock - would call API in production
     addScene(newScene)
-    alert('Scene created! (Backend integration pending)')
+    useToastStore.getState().success('Scene created! (Backend integration pending)')
   }
 
   if (loading) {
