@@ -184,6 +184,29 @@ function Library() {
     }
   }
 
+  // Handle URL input
+  const handleUrlSubmit = async (e) => {
+    e.preventDefault()
+    if (!urlInput.trim()) return
+
+    try {
+      setUploading(true)
+      const result = await imagesAPI.addUrl(urlInput, `Image from URL`)
+      
+      if (result.success) {
+        addImage(result.data)
+        useToastStore.getState().success('Image added from URL')
+        setUrlInput('')
+        setShowUrlInput(false)
+      }
+    } catch (error) {
+      console.error('Failed to add image from URL:', error)
+      useToastStore.getState().error('Failed to add image from URL. Please check the URL.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleDelete = async (imageId) => {
     if (!confirm('Delete this image?')) return
 
