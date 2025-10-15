@@ -4,17 +4,19 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const crypto = require('crypto');
+const sharp = require('sharp');
 const dataStorage = require('../services/storage');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../../uploads');
 fs.mkdir(uploadsDir, { recursive: true }).catch(console.error);
 
-// Multer configuration
+// Multer configuration for temporary storage
 const storage = multer.diskStorage({
   destination: uploadsDir,
   filename: (req, file, cb) => {
-    const uniqueName = crypto.randomBytes(16).toString('hex') + path.extname(file.originalname);
+    // Temporary filename for processing
+    const uniqueName = crypto.randomBytes(16).toString('hex') + '_temp' + path.extname(file.originalname);
     cb(null, uniqueName);
   }
 });
@@ -31,6 +33,50 @@ const upload = multer({
     }
   }
 });
+
+// Convert image to WebP format
+async function convertToWebP(inputPath, originalName) {
+  const baseName = path.parse(originalName).name;
+  const webpFilename = crypto.randomBytes(16).toString('hex') + '.webp';
+  const webpPath = path.join(uploadsDir, webpFilename);
+  
+  try {
+    // Convert to WebP with optimized settings
+    const info = await sharp(inputPath)
+      .webp({ 
+        quality: 85,     // High quality
+        effort: 6,       // Better compression
+        lossless: false  // Use lossy compression for smaller files
+      })
+      .toFile(webpPath);
+    
+    // Delete the temporary original file
+    await fs.unlink(inputPath);
+    
+    console.log(`🔄 Converted ${originalName} to WebP: ${(info.size / 1024).toFixed(2)} KB`);
+    
+    return {
+      filename: webpFilename,
+      path: webpPath,
+      size: info.size,
+      mimeType: 'image/webp'
+    };
+  } catch (error) {
+    // If conversion fails, keep the original file but rename it
+    console.error('WebP conversion failed, keeping original:', error);
+    const fallbackFilename = crypto.randomBytes(16).toString('hex') + path.extname(originalName);
+    const fallbackPath = path.join(uploadsDir, fallbackFilename);
+    await fs.rename(inputPath, fallbackPath);
+    
+    const stats = await fs.stat(fallbackPath);
+    return {
+      filename: fallbackFilename,
+      path: fallbackPath,
+      size: stats.size,
+      mimeType: 'image/' + path.extname(originalName).slice(1)
+    };
+  }
+}
 
 // Get all images
 router.get('/', async (req, res) => {
@@ -50,28 +96,51 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     });
   }
 
-  // Construct the full URL with the proxy path
-  const baseUrl = process.env.API_BASE_URL || 'https://api.piogino.ch/obs';
-  
-  const imageData = {
-    id: Date.now(),
-    filename: req.file.filename,
-    originalName: req.file.originalname,
-    url: `${baseUrl}/uploads/${req.file.filename}`,
-    type: 'uploaded',
-    mimeType: req.file.mimetype,
-    size: req.file.size,
-    createdAt: new Date().toISOString()
-  };
+  try {
+    // Convert image to WebP
+    const tempPath = path.join(uploadsDir, req.file.filename);
+    const convertedImage = await convertToWebP(tempPath, req.file.originalname);
+    
+    // Construct the full URL with the proxy path
+    const baseUrl = process.env.API_BASE_URL || 'https://api.piogino.ch/obs';
+    
+    const imageData = {
+      id: Date.now(),
+      filename: convertedImage.filename,
+      originalName: req.file.originalname,
+      url: `${baseUrl}/uploads/${convertedImage.filename}`,
+      type: 'uploaded',
+      mimeType: convertedImage.mimeType,
+      size: convertedImage.size,
+      originalSize: req.file.size,
+      createdAt: new Date().toISOString(),
+      format: 'webp'
+    };
 
-  await dataStorage.addImage(imageData);
+    await dataStorage.addImage(imageData);
 
-  console.log(`📤 Image uploaded: ${req.file.originalname} (${(req.file.size / 1024).toFixed(2)} KB)`);
+    console.log(`📤 Image uploaded and converted: ${req.file.originalname} (${(req.file.size / 1024).toFixed(2)} KB → ${(convertedImage.size / 1024).toFixed(2)} KB)`);
 
-  res.status(201).json({
-    success: true,
-    data: imageData
-  });
+    res.status(201).json({
+      success: true,
+      data: imageData
+    });
+  } catch (error) {
+    console.error('Error processing uploaded image:', error);
+    
+    // Clean up any temporary files
+    try {
+      const tempPath = path.join(uploadsDir, req.file.filename);
+      await fs.unlink(tempPath);
+    } catch (cleanupError) {
+      // Ignore cleanup errors
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: { message: 'Failed to process uploaded image' }
+    });
+  }
 });
 
 // Add image by URL
