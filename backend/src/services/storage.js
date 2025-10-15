@@ -115,6 +115,16 @@ class Storage {
     return image;
   }
 
+  async updateImage(imageId, updates) {
+    const images = await this.getImages();
+    const index = images.findIndex(img => img.id === imageId);
+    if (index === -1) return null;
+    
+    images[index] = { ...images[index], ...updates };
+    await this.setImages(images);
+    return images[index];
+  }
+
   async deleteImage(imageId) {
     const images = await this.getImages();
     const filtered = images.filter(img => img.id !== imageId);

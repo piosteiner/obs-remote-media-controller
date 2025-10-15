@@ -103,6 +103,40 @@ router.post('/url', async (req, res) => {
   });
 });
 
+// Update image (rename, etc.)
+router.put('/:id', async (req, res) => {
+  const imageId = parseInt(req.params.id);
+  const { originalName, name } = req.body;
+
+  if (!originalName && !name) {
+    return res.status(400).json({
+      success: false,
+      error: { message: 'originalName or name is required' }
+    });
+  }
+
+  const updates = {};
+  if (originalName) updates.originalName = originalName;
+  if (name) updates.originalName = name; // Support both 'name' and 'originalName' fields
+
+  const updatedImage = await dataStorage.updateImage(imageId, updates);
+
+  if (!updatedImage) {
+    return res.status(404).json({
+      success: false,
+      error: { message: 'Image not found' }
+    });
+  }
+
+  console.log(`✏️  Image renamed: ${updatedImage.originalName} (ID: ${imageId})`);
+
+  res.json({
+    success: true,
+    data: updatedImage,
+    message: 'Image updated successfully'
+  });
+});
+
 // Delete image
 router.delete('/:id', async (req, res) => {
   const imageId = parseInt(req.params.id);
