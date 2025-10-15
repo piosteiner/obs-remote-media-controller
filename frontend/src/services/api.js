@@ -80,6 +80,7 @@ export const imagesAPI = {
     })
   },
   addUrl: (url, name) => api.post('/images/url', { url, name }),
+  update: (id, data) => api.put(`/images/${id}`, data),
   delete: (id) => api.delete(`/images/${id}`),
 }
 

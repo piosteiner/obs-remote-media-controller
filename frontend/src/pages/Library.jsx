@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { Upload, Trash2, Search, Clipboard, X, Link as LinkIcon } from 'lucide-react'
+import { Upload, Trash2, Search, Clipboard, X, Link as LinkIcon, Edit2 } from 'lucide-react'
 import Header from '../components/common/Header'
+import Modal from '../components/common/Modal'
+import ConfirmDialog from '../components/common/ConfirmDialog'
 import { imagesAPI, slotsAPI } from '../services/api'
 import websocketService from '../services/websocket'
 import useStore from '../store'
@@ -23,6 +25,14 @@ function Library() {
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [showPasteArea, setShowPasteArea] = useState(false)
   const [clipboardSupported, setClipboardSupported] = useState(false)
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [slotNumber, setSlotNumber] = useState('')
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [imageToDelete, setImageToDelete] = useState(null)
+  const [showRenameModal, setShowRenameModal] = useState(false)
+  const [imageToRename, setImageToRename] = useState(null)
+  const [newImageName, setNewImageName] = useState('')
   const fileInputRef = useRef(null)
   const pasteAreaRef = useRef(null)
 
@@ -205,29 +215,81 @@ function Library() {
   }
 
   const handleDelete = async (imageId) => {
-    if (!confirm('Delete this image?')) return
+    setImageToDelete(imageId)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!imageToDelete) return
 
     try {
-      await imagesAPI.delete(imageId)
-      deleteImage(imageId)
+      await imagesAPI.delete(imageToDelete)
+      deleteImage(imageToDelete)
       useToastStore.getState().success('Image deleted successfully')
     } catch (error) {
       console.error('Failed to delete image:', error)
       useToastStore.getState().error('Failed to delete image')
+    } finally {
+      setShowDeleteDialog(false)
+      setImageToDelete(null)
+    }
+  }
+
+  const handleRename = (image) => {
+    setImageToRename(image)
+    setNewImageName(image.originalName || image.filename || '')
+    setShowRenameModal(true)
+  }
+
+  const submitRename = async (e) => {
+    e.preventDefault()
+    if (!imageToRename || !newImageName.trim()) return
+
+    try {
+      const result = await imagesAPI.update(imageToRename.id, {
+        originalName: newImageName.trim()
+      })
+      
+      if (result.success) {
+        // Update the image in the store
+        const updatedImages = images.map(img => 
+          img.id === imageToRename.id 
+            ? { ...img, originalName: newImageName.trim() }
+            : img
+        )
+        setImages(updatedImages)
+        
+        useToastStore.getState().success('Image renamed successfully')
+        setShowRenameModal(false)
+        setImageToRename(null)
+        setNewImageName('')
+      }
+    } catch (error) {
+      console.error('Failed to rename image:', error)
+      useToastStore.getState().error('Failed to rename image')
     }
   }
 
   const handleAssignToSlot = async (image) => {
-    const slotId = prompt('Enter slot number:')
-    if (!slotId) return
+    setSelectedImage(image)
+    setSlotNumber('')
+    setShowAssignModal(true)
+  }
+
+  const submitAssignToSlot = async (e) => {
+    e.preventDefault()
+    if (!slotNumber || !selectedImage) return
 
     try {
-      await slotsAPI.update(slotId, {
-        imageId: image.id,
-        imageUrl: image.url
+      await slotsAPI.update(slotNumber, {
+        imageId: selectedImage.id,
+        imageUrl: selectedImage.url
       })
-      websocketService.updateSlot(slotId, image.url, image.id)
-      useToastStore.getState().success(`Image assigned to Slot ${slotId}`)
+      websocketService.updateSlot(slotNumber, selectedImage.url, selectedImage.id)
+      useToastStore.getState().success(`Image assigned to Slot ${slotNumber}`)
+      setShowAssignModal(false)
+      setSelectedImage(null)
+      setSlotNumber('')
     } catch (error) {
       console.error('Failed to assign image:', error)
       useToastStore.getState().error('Failed to assign image to slot')
@@ -404,10 +466,26 @@ function Library() {
                   </p>
                 </div>
 
+                {/* Action Buttons (on hover) */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleRename(image)
+                  }}
+                  className="absolute top-2 left-2 p-2 bg-blue-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  title="Rename image"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+
                 {/* Delete Button (on hover) */}
                 <button
-                  onClick={() => handleDelete(image.id)}
-                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDelete(image.id)
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  title="Delete image"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -424,6 +502,164 @@ function Library() {
           </div>
         )}
       </main>
+
+      {/* Assign to Slot Modal */}
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => {
+          setShowAssignModal(false)
+          setSelectedImage(null)
+          setSlotNumber('')
+        }}
+        title="Assign to Slot"
+      >
+        <form onSubmit={submitAssignToSlot} className="space-y-4">
+          <div>
+            <label htmlFor="slotNumber" className="block text-sm font-medium text-gray-700 mb-1">
+              Slot Number
+            </label>
+            <input
+              id="slotNumber"
+              type="number"
+              min="1"
+              value={slotNumber}
+              onChange={(e) => setSlotNumber(e.target.value)}
+              placeholder="Enter slot number (e.g., 1, 2, 3...)"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              autoFocus
+              required
+            />
+          </div>
+
+          {selectedImage && (
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">Image to assign:</p>
+              <div className="flex items-center space-x-3">
+                <img
+                  src={selectedImage.url}
+                  alt={selectedImage.originalName}
+                  className="w-16 h-16 object-cover rounded"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {selectedImage.originalName || selectedImage.filename}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {selectedImage.width} × {selectedImage.height}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAssignModal(false)
+                setSelectedImage(null)
+                setSlotNumber('')
+              }}
+              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!slotNumber}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Assign to Slot
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Rename Image Modal */}
+      <Modal
+        isOpen={showRenameModal}
+        onClose={() => {
+          setShowRenameModal(false)
+          setImageToRename(null)
+          setNewImageName('')
+        }}
+        title="Rename Image"
+      >
+        <form onSubmit={submitRename} className="space-y-4">
+          <div>
+            <label htmlFor="imageName" className="block text-sm font-medium text-gray-700 mb-1">
+              Image Name
+            </label>
+            <input
+              id="imageName"
+              type="text"
+              value={newImageName}
+              onChange={(e) => setNewImageName(e.target.value)}
+              placeholder="Enter new image name"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              autoFocus
+              required
+            />
+          </div>
+
+          {imageToRename && (
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">Preview:</p>
+              <div className="flex items-center space-x-3">
+                <img
+                  src={imageToRename.url}
+                  alt={imageToRename.originalName}
+                  className="w-16 h-16 object-cover rounded"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 mb-1">Current name:</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {imageToRename.originalName || imageToRename.filename}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {imageToRename.width} × {imageToRename.height}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => {
+                setShowRenameModal(false)
+                setImageToRename(null)
+                setNewImageName('')
+              }}
+              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!newImageName.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Rename
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => {
+          setShowDeleteDialog(false)
+          setImageToDelete(null)
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Image"
+        message="Are you sure you want to delete this image? This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   )
 }
