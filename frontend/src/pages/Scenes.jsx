@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Play } from 'lucide-react'
 import Header from '../components/common/Header'
+import Modal from '../components/common/Modal'
+import ConfirmDialog from '../components/common/ConfirmDialog'
 import { scenesAPI } from '../services/api'
 import websocketService from '../services/websocket'
 import useStore from '../store'
@@ -17,7 +19,11 @@ function Scenes() {
   const slots = useStore(state => state.slots)
   
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [sceneToDelete, setSceneToDelete] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [newSceneName, setNewSceneName] = useState('')
+  const [newSceneDescription, setNewSceneDescription] = useState('')
 
   useEffect(() => {
     loadScenes()
@@ -56,33 +62,51 @@ function Scenes() {
   }
 
   const handleDeleteScene = async (sceneId) => {
-    if (!confirm('Are you sure you want to delete this scene?')) return
+    setSceneToDelete(sceneId)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDeleteScene = async () => {
+    if (!sceneToDelete) return
 
     try {
-      await scenesAPI.delete(sceneId)
-      deleteScene(sceneId)
+      await scenesAPI.delete(sceneToDelete)
+      deleteScene(sceneToDelete)
       useToastStore.getState().success('Scene deleted successfully!')
     } catch (error) {
       console.error('Failed to delete scene:', error)
       useToastStore.getState().error('Failed to delete scene. Please try again.')
+    } finally {
+      setSceneToDelete(null)
     }
   }
 
-  const handleCreateScene = async () => {
-    const sceneName = prompt('Enter scene name:')
-    if (!sceneName) return
+  const handleCreateScene = () => {
+    setNewSceneName('')
+    setNewSceneDescription('')
+    setShowCreateModal(true)
+  }
+
+  const submitCreateScene = async () => {
+    if (!newSceneName.trim()) {
+      useToastStore.getState().warning('Please enter a scene name')
+      return
+    }
 
     try {
       // Create scene on backend
       const result = await scenesAPI.create({
-        name: sceneName,
-        description: 'Created from current slots',
+        name: newSceneName.trim(),
+        description: newSceneDescription.trim() || 'Created from current slots',
         slots: { ...slots }
       })
 
       if (result.success) {
         addScene(result.data)
-        useToastStore.getState().success(`Scene "${sceneName}" created successfully!`)
+        useToastStore.getState().success(`Scene "${newSceneName}" created successfully!`)
+        setShowCreateModal(false)
+        setNewSceneName('')
+        setNewSceneDescription('')
       }
     } catch (error) {
       console.error('Failed to create scene:', error)
@@ -167,6 +191,90 @@ function Scenes() {
           </div>
         )}
       </main>
+
+      {/* Create Scene Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Scene"
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="sceneName" className="block text-sm font-medium text-gray-700 mb-2">
+              Scene Name *
+            </label>
+            <input
+              id="sceneName"
+              type="text"
+              value={newSceneName}
+              onChange={(e) => setNewSceneName(e.target.value)}
+              placeholder="e.g., Opening Presentation"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  submitCreateScene()
+                }
+              }}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="sceneDescription" className="block text-sm font-medium text-gray-700 mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              id="sceneDescription"
+              value={newSceneDescription}
+              onChange={(e) => setNewSceneDescription(e.target.value)}
+              placeholder="Describe when to use this scene..."
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+            />
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              <strong>Current slots:</strong> {Object.keys(slots).length} configured
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              This scene will save your current slot configuration
+            </p>
+          </div>
+
+          <div className="flex space-x-3 pt-2">
+            <button
+              onClick={() => setShowCreateModal(false)}
+              className="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submitCreateScene}
+              disabled={!newSceneName.trim()}
+              className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Create Scene
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => {
+          setShowDeleteDialog(false)
+          setSceneToDelete(null)
+        }}
+        onConfirm={confirmDeleteScene}
+        title="Delete Scene?"
+        message="Are you sure you want to delete this scene? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }
