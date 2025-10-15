@@ -3,6 +3,7 @@ import Display from './pages/Display'
 import Control from './pages/Control'
 import Scenes from './pages/Scenes'
 import Library from './pages/Library'
+import Help from './pages/Help'
 import ToastContainer from './components/common/ToastContainer'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/control" element={<Control />} />
         <Route path="/scenes" element={<Scenes />} />
         <Route path="/library" element={<Library />} />
+        <Route path="/help" element={<Help />} />
         <Route path="/" element={<Control />} />
       </Routes>
       <ToastContainer />
