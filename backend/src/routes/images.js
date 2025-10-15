@@ -51,11 +51,14 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     });
   }
 
+  // Construct the full URL with the proxy path
+  const baseUrl = process.env.API_BASE_URL || 'https://api.piogino.ch/obs';
+  
   const imageData = {
     id: Date.now(),
     filename: req.file.filename,
     originalName: req.file.originalname,
-    url: `/uploads/${req.file.filename}`,
+    url: `${baseUrl}/uploads/${req.file.filename}`,
     type: 'uploaded',
     mimeType: req.file.mimetype,
     size: req.file.size,
