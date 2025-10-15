@@ -18,6 +18,8 @@ function Library() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [urlInput, setUrlInput] = useState('')
+  const [showUrlInput, setShowUrlInput] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [showPasteArea, setShowPasteArea] = useState(false)
   const [clipboardSupported, setClipboardSupported] = useState(false)
