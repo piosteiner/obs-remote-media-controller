@@ -125,21 +125,28 @@ router.post('/:id/load', (req, res) => {
     });
   }
 
-  // Update global slots
+  // Initialize global slots if needed
   global.slots = global.slots || {};
+  
+  // Merge scene slots with existing slots (preserve existing data)
+  // Only update slots that are defined in the scene
   Object.entries(scene.slots).forEach(([slotId, slotData]) => {
-    global.slots[slotId] = slotData;
+    if (slotData && (slotData.imageId || slotData.imageUrl)) {
+      // Only update if scene has actual data for this slot
+      global.slots[slotId] = slotData;
+    }
   });
 
-  // Broadcast via WebSocket
+  // Broadcast via WebSocket - only send updated slots
   const io = req.app.get('io');
   io.emit('scene:loaded', {
     sceneId: scene.id,
     sceneName: scene.name,
-    slots: scene.slots
+    slots: scene.slots,
+    allSlots: global.slots // Send current state of all slots
   });
 
-  console.log(`▶️  Scene loaded: ${scene.name} (${Object.keys(scene.slots).length} slots)`);
+  console.log(`▶️  Scene loaded: ${scene.name} (${Object.keys(scene.slots).length} slots defined)`);
 
   res.json({
     success: true,
@@ -147,7 +154,8 @@ router.post('/:id/load', (req, res) => {
     data: {
       sceneId: scene.id,
       sceneName: scene.name,
-      slotsUpdated: Object.keys(scene.slots).length
+      slotsUpdated: Object.keys(scene.slots).length,
+      allSlots: global.slots
     }
   });
 });
