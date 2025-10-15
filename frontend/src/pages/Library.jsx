@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Upload, Trash2, Search, Clipboard, X } from 'lucide-react'
+import { Upload, Trash2, Search, Clipboard, X, Link as LinkIcon } from 'lucide-react'
 import Header from '../components/common/Header'
 import { imagesAPI, slotsAPI } from '../services/api'
 import websocketService from '../services/websocket'
