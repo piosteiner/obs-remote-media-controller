@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Upload, Trash2, Search } from 'lucide-react'
+import { Upload, Trash2, Search, Clipboard, X } from 'lucide-react'
 import Header from '../components/common/Header'
 import { imagesAPI, slotsAPI } from '../services/api'
 import websocketService from '../services/websocket'
@@ -19,11 +19,58 @@ function Library() {
   const [uploading, setUploading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSlot, setSelectedSlot] = useState(null)
+  const [showPasteArea, setShowPasteArea] = useState(false)
+  const [clipboardSupported, setClipboardSupported] = useState(false)
   const fileInputRef = useRef(null)
+  const pasteAreaRef = useRef(null)
 
   useEffect(() => {
     loadImages()
   }, [])
+
+  // Check if clipboard API is supported
+  useEffect(() => {
+    setClipboardSupported(
+      typeof navigator !== 'undefined' && 
+      navigator.clipboard && 
+      typeof navigator.clipboard.read === 'function'
+    )
+  }, [])
+
+  // Handle paste event
+  useEffect(() => {
+    const handlePaste = async (e) => {
+      if (!showPasteArea) return
+      
+      e.preventDefault()
+      const items = e.clipboardData?.items
+      
+      if (!items) return
+      
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile()
+          if (blob) {
+            const file = new File([blob], `pasted-${Date.now()}.png`, { type: blob.type })
+            await uploadFile(file)
+            setShowPasteArea(false)
+            return
+          }
+        }
+      }
+      
+      useToastStore.getState().warning('No image found in clipboard. Please copy an image first.')
+    }
+
+    if (showPasteArea && pasteAreaRef.current) {
+      pasteAreaRef.current.addEventListener('paste', handlePaste)
+      pasteAreaRef.current.focus()
+      
+      return () => {
+        pasteAreaRef.current?.removeEventListener('paste', handlePaste)
+      }
+    }
+  }, [showPasteArea])
 
   const loadImages = async () => {
     try {
@@ -43,6 +90,23 @@ function Library() {
     }
   }
 
+  // Common upload logic
+  const uploadFile = async (file) => {
+    try {
+      setUploading(true)
+      const result = await imagesAPI.upload(file)
+      if (result.success) {
+        addImage(result.data)
+        useToastStore.getState().success(`Image uploaded: ${file.name}`)
+      }
+    } catch (error) {
+      console.error('Failed to upload image:', error)
+      useToastStore.getState().error('Failed to upload image. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
@@ -50,14 +114,16 @@ function Library() {
     try {
       setUploading(true)
       
+      let successCount = 0
       for (const file of files) {
         const result = await imagesAPI.upload(file)
         if (result.success) {
           addImage(result.data)
+          successCount++
         }
       }
       
-      useToastStore.getState().success(`Successfully uploaded ${files.length} image(s)`)
+      useToastStore.getState().success(`Successfully uploaded ${successCount} image(s)`)
     } catch (error) {
       console.error('Failed to upload images:', error)
       useToastStore.getState().error('Failed to upload one or more images')
@@ -66,6 +132,53 @@ function Library() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+    }
+  }
+
+  // Handle clipboard paste
+  const handlePasteFromClipboard = async () => {
+    try {
+      setUploading(true)
+      
+      // Try modern Clipboard API first
+      if (navigator.clipboard && navigator.clipboard.read) {
+        try {
+          const clipboardItems = await navigator.clipboard.read()
+          
+          // Find image in clipboard
+          let imageFile = null
+          for (const item of clipboardItems) {
+            const imageType = item.types.find(type => type.startsWith('image/'))
+            if (imageType) {
+              const blob = await item.getType(imageType)
+              imageFile = new File([blob], `clipboard-${Date.now()}.png`, { type: imageType })
+              break
+            }
+          }
+
+          if (!imageFile) {
+            useToastStore.getState().info('No image in clipboard. Try: Copy an image, then click Paste again.')
+            setUploading(false)
+            return
+          }
+
+          await uploadFile(imageFile)
+          return
+        } catch (clipboardError) {
+          console.log('Clipboard API failed, trying paste event approach:', clipboardError)
+        }
+      }
+      
+      // Fallback: Show paste area for Ctrl+V
+      setShowPasteArea(true)
+      useToastStore.getState().info('Click in the blue box below, then press Ctrl+V (Cmd+V on Mac) to paste.')
+      setUploading(false)
+      
+    } catch (error) {
+      console.error('Failed to paste from clipboard:', error)
+      setShowPasteArea(true)
+      useToastStore.getState().info('Click in the blue box below, then press Ctrl+V (Cmd+V on Mac) to paste.')
+      setUploading(false)
     }
   }
 
@@ -125,6 +238,19 @@ function Library() {
               />
             </div>
 
+            {/* Paste Button */}
+            {clipboardSupported && (
+              <button
+                onClick={handlePasteFromClipboard}
+                disabled={uploading}
+                className="flex items-center justify-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+                title="Paste image from clipboard"
+              >
+                <Clipboard className="w-5 h-5" />
+                <span>Paste</span>
+              </button>
+            )}
+
             {/* Upload Button */}
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -144,6 +270,28 @@ function Library() {
               className="hidden"
             />
           </div>
+
+          {/* Paste Area */}
+          {showPasteArea && (
+            <div className="relative mt-4">
+              <div
+                ref={pasteAreaRef}
+                contentEditable
+                tabIndex={0}
+                className="w-full px-4 py-8 border-2 border-dashed border-blue-400 bg-blue-50 rounded-lg text-center text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-text"
+              >
+                <Clipboard className="w-8 h-8 mx-auto mb-2" />
+                <p className="font-medium">Click here and press Ctrl+V (⌘+V on Mac)</p>
+                <p className="text-sm mt-1">Paste your image from clipboard to add to library</p>
+              </div>
+              <button
+                onClick={() => setShowPasteArea(false)}
+                className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm hover:bg-gray-100"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+          )}
         </div>
 
         {loading ? (
