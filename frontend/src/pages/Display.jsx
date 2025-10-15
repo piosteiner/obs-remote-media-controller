@@ -15,7 +15,9 @@ import useStore from '../store'
  */
 function Display() {
   const [searchParams] = useSearchParams()
-  const slotId = searchParams.get('slot') || '1'
+  const slotIdParam = searchParams.get('slot') || '1'
+  // Convert to number to match backend slot IDs
+  const slotId = Number(slotIdParam)
   
   const slots = useStore(state => state.slots)
   const isConnected = useStore(state => state.isConnected)
