@@ -1,175 +1,393 @@
-# OBS Remote Media Controller
+# OBS Remote Media Controller# OBS Remote Media Controller
 
-> 🎬 Remote control for OBS Studio media sources via web interface. Manage images, videos, and scenes from any device.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
----
+> 🎬 Control OBS Studio media remotely from any device - iPad, phone, or computer.> 🎬 Control OBS Studio media remotely from any device - iPad, phone, or computer.
 
-## 🎯 What is This?
 
-**OBS Remote Media Controller** is a web-based solution that allows you to dynamically control images and media in OBS Studio from any device. Perfect for streamers, presenters, and content creators who need to switch media during live streams without touching their OBS machine.
 
-### The Problem It Solves
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-- 🔄 No more manually updating image sources in OBS
-- 📱 Control OBS media from your iPad, phone, or another computer
-- ⚡ Instant image switching with one click
-- 🎨 Support for transparent PNGs and multiple image formats
-- 🎬 Pre-configured scene presets for quick transitions
-- 🖼️ Manage multiple image slots simultaneously
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
 
----
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-## ✨ Key Features
 
-### 🎮 Remote Control
-- Control from any device with a web browser
-- Real-time updates via WebSocket (200-500ms latency)
-- iPad-optimized touch interface
-- Works over local network or internet
 
-### 🖼️ Media Management
-- Upload images or use web URLs
-- Support for PNG (with transparency), JPG, GIF, WebP
-- Image library with preview thumbnails
-- Drag-and-drop upload
-- Recent images quick access
+**Live Demo:** [obs-media-control.piogino.ch](https://obs-media-control.piogino.ch)**Live Demo:** [obs-media-control.piogino.ch](https://obs-media-control.piogino.ch)
 
-### 🎬 Scene Presets
-- Create unlimited scene configurations
-- One-click scene switching
-- Assign multiple images to multiple slots per scene
-- Save and organize your favorite setups
 
-### 🎨 Multi-Slot Support
-- Control multiple OBS browser sources
-- Independent slot management
-- Simultaneous image display
-- Flexible positioning in OBS
 
-### 🔧 OBS Integration
-- Simple Browser Source setup
-- Transparent background support
-- Smooth fade transitions
-- Auto-reconnection on network issues
-- No OBS plugins required
+------
 
----
 
-## 🚀 Quick Start
 
-### For Users (After Deployment)
+## 🎯 What is This?## 🎯 What is This?
 
-1. **Access Control Panel**
-   - Visit: `https://obs-media-control.piogino.ch/control`
-   - From any device (iPad, phone, laptop)
 
-2. **Configure OBS**
-   - Add Browser Source in OBS
-   - URL: `https://obs-media-control.piogino.ch/display?slot=1`
-   - Width: 1920, Height: 1080 (your canvas size)
-   - Check "Shutdown source when not visible"
 
-3. **Upload & Control**
-   - Upload images or paste URLs
-   - Watch them appear in OBS instantly!
+A web-based remote control for OBS Studio that lets you manage images and scenes from any device. Perfect for:A web-based remote control for OBS Studio that lets you manage images and scenes from any device. Perfect for:
 
-### For Deployment
+- 📊 **Business presentations** - Switch slides from your iPad- 📊 **Business presentations** - Switch slides from your iPad
 
-See detailed guides:
-- **[GitHub Pages Setup](GITHUB_PAGES_SETUP.md)** - Deploy frontend (5 minutes)
-- **[Backend Deployment](backend/DEPLOY.md)** - Deploy backend to VPS
+- 🎮 **Live streaming** - Update overlays without touching OBS- 🎮 **Live streaming** - Update overlays without touching OBS
 
----
+- 🎓 **Online teaching** - Display materials on demand- 🎓 **Online teaching** - Display materials on demand
 
-## 📖 Documentation
+- 🎪 **Events & webinars** - Professional media management- 🎪 **Events & webinars** - Professional media management
 
-- **[GitHub Pages Setup](GITHUB_PAGES_SETUP.md)** - Deploy frontend in 5 minutes
-- **[Backend Deployment](backend/DEPLOY.md)** - Deploy backend to VPS
-- **[Frontend Deployment Guide](frontend/DEPLOY.md)** - Detailed frontend deployment options
-- **[Project Plan](PROJECT_PLAN.md)** - Complete project roadmap
-- **[Architecture](docs/ARCHITECTURE.md)** - Technical architecture details
+
+
+### The Problem It Solves### The Problem It Solves
+
+
+
+❌ Manually updating OBS image sources during live events  ❌ Manually updating OBS image sources during live events  
+
+❌ Interrupting presentations to change media  ❌ Interrupting presentations to change media  
+
+❌ Complex OBS navigation while presenting  ❌ Complex OBS navigation while presenting  
+
+
+
+✅ Control OBS remotely from iPad/phone  ✅ Control OBS remotely from iPad/phone  
+
+✅ One-click scene switching  ✅ One-click scene switching  
+
+✅ Real-time updates (200-500ms)  ✅ Real-time updates (200-500ms)  
+
+
+
+------
+
+
+
+## ✨ Key Features## ✨ Key Features
+
+
+
+- 🎮 **Remote Control** - Manage from iPad, phone, or any device## ✨ Key Features
+
+- ⚡ **Real-time Updates** - WebSocket sync (200-500ms latency)
+
+- 🎬 **Scene Presets** - Save and load complete configurations- 🎮 **Remote Control** - Manage from iPad, phone, or any device
+
+- 🖼️ **Image Library** - Organize and reuse images- ⚡ **Real-time Updates** - WebSocket sync (200-500ms latency)
+
+- 📋 **Multiple Inputs** - Upload, paste, URL, or library- 🎬 **Scene Presets** - Save and load complete configurations
+
+- 💾 **Save to Library** - Keep images for reuse- 🖼️ **Image Library** - Organize and reuse images
+
+- 📱 **Mobile-Optimized** - Touch-friendly iPad interface- 📋 **Multiple Inputs** - Upload, paste, URL, or library
+
+- 🔄 **Auto-Reconnect** - Handles network interruptions- 💾 **Save to Library** - Keep images for reuse
+
+- 📱 **Mobile-Optimized** - Touch-friendly iPad interface
+
+---- 🔄 **Auto-Reconnect** - Handles network interruptions
+
+
+
+## 🚀 Quick Start---
+
+
+
+### 1. Access Control Panel## 🚀 Quick Start
+
+
+
+Visit from any device:### 1. Access Control Panel
+
+```
+
+https://obs-media-control.piogino.ch/controlVisit from any device:
+
+``````
+
+https://obs-media-control.piogino.ch/control
+
+### 2. Configure OBS```
+
+
+
+Add a **Browser Source**:### 2. Configure OBS
+
+- **URL:** `https://obs-media-control.piogino.ch/display?slot=1`
+
+- **Width:** 1920, **Height:** 1080Add a **Browser Source**:
+
+- ✅ Check "Shutdown source when not visible"- **URL:** `https://obs-media-control.piogino.ch/display?slot=1`
+
+- **Width:** 1920, **Height:** 1080
+
+### 3. Control Images- ✅ Check "Shutdown source when not visible"
+
+
+
+- Upload, paste, or use URLs### 3. Control Images
+
+- Images appear in OBS instantly
+
+- Create scenes for quick switching- Upload, paste, or use URLs
+
+- Images appear in OBS instantly
+
+**That's it!** See **[DOCUMENTATION.md](DOCUMENTATION.md)** for the complete guide.- Create scenes for quick switching
+
+
+
+---**That's it!** See [DOCUMENTATION.md](DOCUMENTATION.md) for complete guide.
+
+
+
+## 📖 Documentation---
+
+
+
+- **[Complete Documentation](DOCUMENTATION.md)** - Full user guide with all features## 📖 Documentation
+
 - **[API Reference](docs/API.md)** - Complete API documentation
-- **[Backend Code Review](docs/BACKEND_REVIEW.md)** - Code quality assessment (96/100)
 
----
+- **[Architecture](docs/ARCHITECTURE.md)** - Technical architecture details- **[Complete Documentation](DOCUMENTATION.md)** - Full user guide
 
-## 🎨 Use Cases
+- **[Contributing](CONTRIBUTING.md)** - How to contribute- **[API Reference](docs/API.md)** - API documentation
 
-### 📊 Business Presentations
-- Switch product images during demos
+- **[Architecture](docs/ARCHITECTURE.md)** - Technical details
+
+---- **[Contributing](CONTRIBUTING.md)** - Contribution guide
+
+
+
+## 🏗️ Architecture---
+
+
+
+```## 🏗️ Architecture
+
+┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
+
+│   Your iPad/    │         │  GitHub Pages    │         │  OBS Machine    │```
+
+│   Phone         │◄───────►│  (Frontend)      │◄───────►│  (Laptop)       │┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
+
+│                 │  HTTPS  │                  │WebSocket│                 ││   Your iPad/    │         │  GitHub Pages    │         │  OBS Machine    │
+
+│  Control Panel  │         │  obs-media-      │         │  Browser Source ││   Phone         │◄───────►│  (Frontend)      │◄───────►│  (Laptop)       │
+
+│                 │         │  control.piogino │         │  (Display Page) ││                 │  HTTPS  │                  │WebSocket│                 │
+
+│                 │         │  .ch             │         │                 ││  Control Panel  │         │  obs-media-      │         │  Browser Source │
+
+└─────────────────┘         └────────┬─────────┘         └─────────────────┘│                 │         │  control.piogino │         │  (Display Page) │
+
+                                     ││                 │         │  .ch             │         │                 │
+
+                                     │ HTTPS/WSS└─────────────────┘         └────────┬─────────┘         └─────────────────┘
+
+                                     ▼                                     │
+
+                            ┌──────────────────┐                                     │ HTTPS/WSS
+
+                            │  VPS Backend     │                                     ▼
+
+                            │  api.piogino.ch  │                            ┌──────────────────┐
+
+                            │                  │                            │  VPS Backend     │
+
+                            │  - REST API      │                            │  api.piogino.ch  │
+
+                            │  - WebSocket     │                            │                  │
+
+                            │  - SQLite DB     │                            │  - REST API      │
+
+                            │  - Image Storage │                            │  - WebSocket     │
+
+                            └──────────────────┘                            │  - SQLite DB     │
+
+```                            │  - Image Storage │
+
+                            └──────────────────┘
+
+**Deployment:**```
+
+- Frontend: GitHub Pages (free hosting)
+
+- Backend: VPS at api.piogino.ch**Deployment:**
+
+- OBS: Reads from GitHub Pages display URLs- Frontend: GitHub Pages (free hosting)
+
+- Backend: VPS at api.piogino.ch
+
+---- OBS: Reads from GitHub Pages display URLs
+
+
+
+## 🛠️ Technology Stack---
+
+
+
+**Frontend:** React 18, Vite, Tailwind CSS, Socket.io-client  ## 🛠️ Technology Stack
+
+**Backend:** Node.js, Express, Socket.io, SQLite, PM2  
+
+**Deployment:** GitHub Pages, Nginx, Let's Encrypt SSL**Frontend:** React 18, Vite, Tailwind CSS, Socket.io-client  
+
+**Backend:** Node.js, Express, Socket.io, SQLite, PM2  
+
+---**Deployment:** GitHub Pages, Nginx, Let's Encrypt SSL
+
+
+
+## 🎨 Use Cases---
+
+
+
+**📊 Business Presentations** - Switch product images, display QR codes, show charts  ## 🎨 Use Cases
+
+**🎮 Live Streaming** - Rotate sponsor logos, display viewer submissions  
+
+**🎓 Online Teaching** - Display course materials, switch lesson slides  ### 📊 Business Presentations
+
+**🎪 Events & Webinars** - Speaker slides, sponsor acknowledgments, polls  - Switch product images during demos
+
 - Display QR codes for audience engagement
-- Show charts and graphs on demand
 
-### 🎮 Live Streaming
+---- Show charts and graphs on demand
+
+
+
+## 📱 Typical Workflow### 🎮 Live Streaming
+
 - Rotate sponsor logos
-- Display viewer submissions
-- Switch between game assets
-- Show alerts and notifications
+
+**Setup Phase:**- Display viewer submissions
+
+1. Upload images to library- Switch between game assets
+
+2. Create scene presets- Show alerts and notifications
+
+3. Configure OBS Browser Sources
 
 ### 🎓 Online Teaching
-- Display course materials
-- Switch between lesson slides
-- Show student work
-- Visual demonstrations
+
+**During Event (iPad):**- Display course materials
+
+1. Open control panel- Switch between lesson slides
+
+2. Load scenes with one tap- Show student work
+
+3. Update individual slots as needed- Visual demonstrations
+
+4. No touching your laptop!
 
 ### 🎪 Events & Webinars
-- Speaker slides
+
+---- Speaker slides
+
 - Sponsor acknowledgments
-- Social media graphics
+
+## 🎯 Current Status- Social media graphics
+
 - Live polls and Q&A codes
 
+**Version:** 1.0.0 ✅ Production Ready
+
 ---
 
-## 🏗️ Architecture Overview
+**Completed:**
 
-```
-┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│   Your iPad/    │         │  GitHub Pages    │         │  OBS Machine    │
-│   Phone         │◄───────►│  (Frontend)      │◄───────►│  (Laptop)       │
+- ✅ Frontend & backend fully implemented## 🏗️ Architecture Overview
+
+- ✅ Real-time WebSocket updates
+
+- ✅ GitHub Pages deployment```
+
+- ✅ Scene management & image library┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
+
+- ✅ Mobile-optimized interface│   Your iPad/    │         │  GitHub Pages    │         │  OBS Machine    │
+
+- ✅ Comprehensive documentation│   Phone         │◄───────►│  (Frontend)      │◄───────►│  (Laptop)       │
+
 │                 │  HTTPS  │                  │WebSocket│                 │
-│  Control Panel  │         │  obs-media-      │         │  Browser Source │
-│                 │         │  control.piogino │         │  (Display Page) │
-│                 │         │  .ch             │         │                 │
-└─────────────────┘         └────────┬─────────┘         └─────────────────┘
+
+**Coming Soon (v1.1):**│  Control Panel  │         │  obs-media-      │         │  Browser Source │
+
+- 🔜 Video support│                 │         │  control.piogino │         │  (Display Page) │
+
+- 🔜 User authentication│                 │         │  .ch             │         │                 │
+
+- 🔜 Advanced scene features└─────────────────┘         └────────┬─────────┘         └─────────────────┘
+
                                      │
-                                     │ HTTPS/WSS
+
+---                                     │ HTTPS/WSS
+
                                      ▼
-                            ┌──────────────────┐
+
+## 🤝 Contributing                            ┌──────────────────┐
+
                             │  Infomaniak VPS  │
-                            │  (Backend)       │
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.                            │  (Backend)       │
+
                             │  83.228.207.199  │
-                            │                  │
-                            │  - API Server    │
-                            │  - WebSocket     │
-                            │  - Image Storage │
+
+- 🐛 Bug reports                            │                  │
+
+- 💡 Feature suggestions                            │  - API Server    │
+
+- 📖 Documentation improvements                            │  - WebSocket     │
+
+- 🔧 Code contributions                            │  - Image Storage │
+
                             └──────────────────┘
-```
 
-**Deployment:**
+---```
+
+
+
+## 📄 License**Deployment:**
+
 - **Frontend**: GitHub Pages at `obs-media-control.piogino.ch` (Free!)
-- **Backend**: Infomaniak VPS at `83.228.207.199` or `api.piogino.ch`
+
+MIT License - see [LICENSE](LICENSE) file for details.- **Backend**: Infomaniak VPS at `83.228.207.199` or `api.piogino.ch`
+
 - **OBS**: Reads from GitHub Pages frontend (Browser Source)
-- **Control**: Access from any device via GitHub Pages URL
 
-**How it works:**
+---- **Control**: Access from any device via GitHub Pages URL
+
+
+
+## 📞 Support**How it works:**
+
 1. **Frontend** deployed to GitHub Pages (free hosting!)
-2. **Backend** runs on your Infomaniak VPS (83.228.207.199)
-3. Control from any device via `obs-media-control.piogino.ch`
-4. Backend API at `api.piogino.ch` (or direct IP)
+
+- **Documentation:** [DOCUMENTATION.md](DOCUMENTATION.md)2. **Backend** runs on your Infomaniak VPS (83.228.207.199)
+
+- **Issues:** [GitHub Issues](https://github.com/piosteiner/obs-remote-media-controller/issues)3. Control from any device via `obs-media-control.piogino.ch`
+
+- **Discussions:** [GitHub Discussions](https://github.com/piosteiner/obs-remote-media-controller/discussions)4. Backend API at `api.piogino.ch` (or direct IP)
+
 5. OBS Browser Sources point to GitHub Pages display URLs
-6. All updates happen in real-time via WebSocket (200-500ms)
 
----
+---6. All updates happen in real-time via WebSocket (200-500ms)
 
-## 🛠️ Technology Stack
 
-### Backend
+
+## ⭐ Show Your Support---
+
+
+
+If this project helps you, give it a star on GitHub! ⭐## 🛠️ Technology Stack
+
+
+
+---### Backend
+
 - Node.js + Express
-- WebSocket (Socket.io)
+
+**Made with ❤️ for the OBS community**- WebSocket (Socket.io)
+
 - SQLite / PostgreSQL
 - Multer (file uploads)
 
