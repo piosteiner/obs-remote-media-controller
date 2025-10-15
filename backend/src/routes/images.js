@@ -51,23 +51,14 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     });
   }
 
-  // Build full URL for the uploaded image
-  // Use PUBLIC_URL from environment for production (includes /obs path)
-  // Fall back to building URL from request for development
-  let imageUrl;
-  if (process.env.PUBLIC_URL) {
-    imageUrl = `${process.env.PUBLIC_URL}/uploads/${req.file.filename}`;
-  } else {
-    const protocol = req.protocol;
-    const host = req.get('host');
-    imageUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
-  }
-
+  // Construct the full URL with the proxy path
+  const baseUrl = process.env.API_BASE_URL || 'https://api.piogino.ch/obs';
+  
   const imageData = {
     id: Date.now(),
     filename: req.file.filename,
     originalName: req.file.originalname,
-    url: imageUrl,
+    url: `${baseUrl}/uploads/${req.file.filename}`,
     type: 'uploaded',
     mimeType: req.file.mimetype,
     size: req.file.size,
@@ -77,7 +68,6 @@ router.post('/upload', upload.single('image'), async (req, res) => {
   images.push(imageData);
 
   console.log(`📤 Image uploaded: ${req.file.originalname} (${(req.file.size / 1024).toFixed(2)} KB)`);
-  console.log(`🔗 Image URL: ${imageUrl}`);
 
   res.status(201).json({
     success: true,
