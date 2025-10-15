@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link as LinkIcon, Upload, X, Image as ImageIcon, Clipboard } from 'lucide-react'
+import { Link as LinkIcon, Upload, X, Image as ImageIcon, Clipboard, Library } from 'lucide-react'
 import { slotsAPI, imagesAPI } from '../../services/api'
 import websocketService from '../../services/websocket'
 import useStore from '../../store'
 import useToastStore from '../../store/toast'
+import LibraryPicker from '../common/LibraryPicker'
 
 function SlotControl({ slotId, slotData }) {
   const clearSlot = useStore(state => state.clearSlot)
@@ -14,6 +15,7 @@ function SlotControl({ slotId, slotData }) {
   const [uploading, setUploading] = useState(false)
   const [clipboardSupported, setClipboardSupported] = useState(false)
   const [showPasteArea, setShowPasteArea] = useState(false)
+  const [showLibraryPicker, setShowLibraryPicker] = useState(false)
   const fileInputRef = useRef(null)
   const pasteAreaRef = useRef(null)
 
@@ -181,6 +183,22 @@ function SlotControl({ slotId, slotData }) {
     }
   }
 
+  // Handle library image selection
+  const handleLibrarySelect = async (image) => {
+    try {
+      // Update slot with selected library image
+      await slotsAPI.update(slotId, { 
+        imageId: image.id,
+        imageUrl: image.url 
+      })
+      websocketService.updateSlot(slotId, image.url, image.id)
+      useToastStore.getState().success(`Selected "${image.name}" for Slot ${slotId}`)
+    } catch (error) {
+      console.error('Failed to update slot:', error)
+      useToastStore.getState().error('Failed to update slot. Please try again.')
+    }
+  }
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
       <div className="flex items-start justify-between mb-4">
@@ -277,7 +295,16 @@ function SlotControl({ slotId, slotData }) {
             </button>
           </form>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button
+              onClick={() => setShowLibraryPicker(true)}
+              className="flex items-center justify-center space-x-2 px-4 py-3 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+              title="Choose from library"
+            >
+              <Library className="w-4 h-4" />
+              <span>Library</span>
+            </button>
+
             <button
               onClick={() => setShowUrlInput(true)}
               className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-primary-400 hover:text-primary-600 transition-colors"
@@ -317,6 +344,13 @@ function SlotControl({ slotId, slotData }) {
           </div>
         )}
       </div>
+
+      {/* Library Picker Modal */}
+      <LibraryPicker
+        isOpen={showLibraryPicker}
+        onClose={() => setShowLibraryPicker(false)}
+        onSelect={handleLibrarySelect}
+      />
     </div>
   )
 }
