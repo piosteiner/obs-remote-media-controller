@@ -36,9 +36,10 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
   }
 
   // Filter images based on search
-  const filteredImages = images.filter(img =>
-    img.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredImages = images.filter(img => {
+    const imageName = img.originalName || img.filename || img.name || ''
+    return imageName.toLowerCase().includes(searchTerm.toLowerCase())
+  })
 
   const handleSelect = () => {
     if (selectedImage) {
@@ -101,7 +102,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
                 >
                   <img
                     src={image.url}
-                    alt={image.name}
+                    alt={image.originalName || image.filename}
                     className="w-full h-full object-cover"
                   />
                   
@@ -115,7 +116,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
                   {/* Image Name */}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                     <p className="text-white text-xs font-medium truncate">
-                      {image.name}
+                      {image.originalName || image.filename}
                     </p>
                   </div>
                 </button>
@@ -128,7 +129,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
         {selectedImage && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-sm text-blue-800">
-              <strong>Selected:</strong> {selectedImage.name}
+              <strong>Selected:</strong> {selectedImage.originalName || selectedImage.filename}
             </p>
           </div>
         )}
