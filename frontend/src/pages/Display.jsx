@@ -80,12 +80,12 @@ function Display() {
   }, [imageUrl, currentImageUrl])
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-transparent flex items-center justify-center">
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-transparent">
       {currentImageUrl ? (
         <img
           src={currentImageUrl}
           alt={`Slot ${slotId}`}
-          className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${
+          className={`w-full h-full object-cover transition-opacity duration-300 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           onLoad={() => setImageLoaded(true)}
