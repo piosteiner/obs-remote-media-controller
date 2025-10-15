@@ -1,20 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const storage = require('../services/storage');
 
 // Get all slots
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+  const slots = await storage.getSlots();
   res.json({
     success: true,
-    data: {
-      slots: global.slots || {}
-    }
+    data: { slots }
   });
 });
 
 // Get single slot
-router.get('/:slotId', (req, res) => {
+router.get('/:slotId', async (req, res) => {
   const { slotId } = req.params;
-  const slotData = global.slots?.[slotId] || {
+  const slots = await storage.getSlots();
+  const slotData = slots[slotId] || {
     imageId: null,
     imageUrl: null,
     updatedAt: null
@@ -30,7 +31,7 @@ router.get('/:slotId', (req, res) => {
 });
 
 // Update slot
-router.put('/:slotId', (req, res) => {
+router.put('/:slotId', async (req, res) => {
   const { slotId } = req.params;
   const { imageId, imageUrl } = req.body;
 
@@ -40,8 +41,7 @@ router.put('/:slotId', (req, res) => {
     updatedAt: new Date().toISOString()
   };
 
-  global.slots = global.slots || {};
-  global.slots[slotId] = slotData;
+  await storage.setSlot(slotId, slotData);
 
   // Broadcast via WebSocket
   const io = req.app.get('io');
@@ -61,15 +61,16 @@ router.put('/:slotId', (req, res) => {
 });
 
 // Clear slot
-router.delete('/:slotId', (req, res) => {
+router.delete('/:slotId', async (req, res) => {
   const { slotId } = req.params;
 
-  global.slots = global.slots || {};
-  global.slots[slotId] = {
+  const clearedData = {
     imageId: null,
     imageUrl: null,
     updatedAt: null
   };
+
+  await storage.setSlot(slotId, clearedData);
 
   // Broadcast via WebSocket
   const io = req.app.get('io');

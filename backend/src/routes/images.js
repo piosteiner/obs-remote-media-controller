@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const crypto = require('crypto');
+const dataStorage = require('../services/storage');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../../uploads');
@@ -31,11 +32,9 @@ const upload = multer({
   }
 });
 
-// In-memory image storage (replace with database in production)
-const images = [];
-
 // Get all images
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+  const images = await dataStorage.getImages();
   res.json({
     success: true,
     data: { images }
@@ -65,7 +64,7 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  images.push(imageData);
+  await dataStorage.addImage(imageData);
 
   console.log(`📤 Image uploaded: ${req.file.originalname} (${(req.file.size / 1024).toFixed(2)} KB)`);
 
@@ -76,7 +75,7 @@ router.post('/upload', upload.single('image'), async (req, res) => {
 });
 
 // Add image by URL
-router.post('/url', (req, res) => {
+router.post('/url', async (req, res) => {
   const { url, name } = req.body;
 
   if (!url) {
@@ -94,7 +93,7 @@ router.post('/url', (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  images.push(imageData);
+  await dataStorage.addImage(imageData);
 
   console.log(`🔗 Image added from URL: ${url}`);
 
@@ -107,16 +106,15 @@ router.post('/url', (req, res) => {
 // Delete image
 router.delete('/:id', async (req, res) => {
   const imageId = parseInt(req.params.id);
-  const imageIndex = images.findIndex(img => img.id === imageId);
+  const images = await dataStorage.getImages();
+  const image = images.find(img => img.id === imageId);
 
-  if (imageIndex === -1) {
+  if (!image) {
     return res.status(404).json({
       success: false,
       error: { message: 'Image not found' }
     });
   }
-
-  const image = images[imageIndex];
 
   // Delete file if it's an uploaded image
   if (image.type === 'uploaded' && image.filename) {
@@ -128,7 +126,7 @@ router.delete('/:id', async (req, res) => {
     }
   }
 
-  images.splice(imageIndex, 1);
+  await dataStorage.deleteImage(imageId);
 
   res.json({
     success: true,

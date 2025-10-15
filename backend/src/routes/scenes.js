@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-
-// In-memory scene storage (replace with database in production)
-const scenes = [];
+const storage = require('../services/storage');
 
 // Get all scenes
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+  const scenes = await storage.getScenes();
   res.json({
     success: true,
     data: { scenes }
@@ -13,8 +12,9 @@ router.get('/', (req, res) => {
 });
 
 // Get single scene
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const sceneId = parseInt(req.params.id);
+  const scenes = await storage.getScenes();
   const scene = scenes.find(s => s.id === sceneId);
 
   if (!scene) {
@@ -31,7 +31,7 @@ router.get('/:id', (req, res) => {
 });
 
 // Create scene
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { name, description, slots } = req.body;
 
   if (!name) {
@@ -50,7 +50,7 @@ router.post('/', (req, res) => {
     updatedAt: new Date().toISOString()
   };
 
-  scenes.push(scene);
+  await storage.addScene(scene);
 
   console.log(`🎬 Scene created: ${name}`);
 
@@ -61,51 +61,50 @@ router.post('/', (req, res) => {
 });
 
 // Update scene
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const sceneId = parseInt(req.params.id);
-  const sceneIndex = scenes.findIndex(s => s.id === sceneId);
+  const { name, description, slots } = req.body;
 
-  if (sceneIndex === -1) {
+  const updates = {
+    name,
+    description,
+    slots,
+    updatedAt: new Date().toISOString()
+  };
+
+  // Remove undefined values
+  Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
+
+  const updated = await storage.updateScene(sceneId, updates);
+
+  if (!updated) {
     return res.status(404).json({
       success: false,
       error: { message: 'Scene not found' }
     });
   }
 
-  const { name, description, slots } = req.body;
-
-  scenes[sceneIndex] = {
-    ...scenes[sceneIndex],
-    name: name || scenes[sceneIndex].name,
-    description: description !== undefined ? description : scenes[sceneIndex].description,
-    slots: slots !== undefined ? slots : scenes[sceneIndex].slots,
-    updatedAt: new Date().toISOString()
-  };
-
-  console.log(`✏️  Scene updated: ${scenes[sceneIndex].name}`);
+  console.log(`✏️  Scene updated: ${updated.name}`);
 
   res.json({
     success: true,
-    data: scenes[sceneIndex]
+    data: updated
   });
 });
 
 // Delete scene
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const sceneId = parseInt(req.params.id);
-  const sceneIndex = scenes.findIndex(s => s.id === sceneId);
+  const deleted = await storage.deleteScene(sceneId);
 
-  if (sceneIndex === -1) {
+  if (!deleted) {
     return res.status(404).json({
       success: false,
       error: { message: 'Scene not found' }
     });
   }
 
-  const deletedScene = scenes[sceneIndex];
-  scenes.splice(sceneIndex, 1);
-
-  console.log(`🗑️  Scene deleted: ${deletedScene.name}`);
+  console.log(`🗑️  Scene deleted: ID ${sceneId}`);
 
   res.json({
     success: true,
@@ -114,8 +113,9 @@ router.delete('/:id', (req, res) => {
 });
 
 // Load scene (apply to slots)
-router.post('/:id/load', (req, res) => {
+router.post('/:id/load', async (req, res) => {
   const sceneId = parseInt(req.params.id);
+  const scenes = await storage.getScenes();
   const scene = scenes.find(s => s.id === sceneId);
 
   if (!scene) {
@@ -125,25 +125,19 @@ router.post('/:id/load', (req, res) => {
     });
   }
 
-  // Initialize global slots if needed
-  global.slots = global.slots || {};
-  
-  // Merge scene slots with existing slots (preserve existing data)
-  // Only update slots that are defined in the scene
-  Object.entries(scene.slots).forEach(([slotId, slotData]) => {
-    if (slotData && (slotData.imageId || slotData.imageUrl)) {
-      // Only update if scene has actual data for this slot
-      global.slots[slotId] = slotData;
-    }
-  });
+  // REPLACE all slots with scene slots (each scene is independent)
+  // This ensures scenes don't interfere with each other
+  const newSlots = { ...scene.slots };
 
-  // Broadcast via WebSocket - only send updated slots
+  // Save the new slot configuration
+  await storage.setSlots(newSlots);
+
+  // Broadcast via WebSocket - send complete slot state
   const io = req.app.get('io');
   io.emit('scene:loaded', {
     sceneId: scene.id,
     sceneName: scene.name,
-    slots: scene.slots,
-    allSlots: global.slots // Send current state of all slots
+    slots: newSlots // Send the scene's slots
   });
 
   console.log(`▶️  Scene loaded: ${scene.name} (${Object.keys(scene.slots).length} slots defined)`);
@@ -155,7 +149,43 @@ router.post('/:id/load', (req, res) => {
       sceneId: scene.id,
       sceneName: scene.name,
       slotsUpdated: Object.keys(scene.slots).length,
-      allSlots: global.slots
+      allSlots: newSlots
+    }
+  });
+});
+
+// Capture current slots to scene (update scene with current slot configuration)
+router.post('/:id/capture', async (req, res) => {
+  const sceneId = parseInt(req.params.id);
+  
+  // Get current slots
+  const currentSlots = await storage.getSlots();
+  
+  // Update the scene with current slots
+  const updates = {
+    slots: currentSlots,
+    updatedAt: new Date().toISOString()
+  };
+  
+  const updated = await storage.updateScene(sceneId, updates);
+  
+  if (!updated) {
+    return res.status(404).json({
+      success: false,
+      error: { message: 'Scene not found' }
+    });
+  }
+  
+  console.log(`📸 Scene captured: ${updated.name} (${Object.keys(currentSlots).length} slots saved)`);
+  
+  res.json({
+    success: true,
+    message: 'Scene updated with current slots',
+    data: {
+      sceneId: updated.id,
+      sceneName: updated.name,
+      slotsCaptured: Object.keys(currentSlots).length,
+      slots: currentSlots
     }
   });
 });
