@@ -1,12 +1,23 @@
 import { X, CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import useToastStore from '../../store/toast'
 
 /**
  * Toast Component
- * Beautiful notification toasts
+ * Beautiful notification toasts with auto-dismiss
  */
-function Toast({ id, type, message }) {
+function Toast({ id, type, message, duration = 3000 }) {
   const removeToast = useToastStore(state => state.removeToast)
+  const [isExiting, setIsExiting] = useState(false)
+
+  useEffect(() => {
+    // Start exit animation before removal
+    const exitTimer = setTimeout(() => {
+      setIsExiting(true)
+    }, duration - 300) // Start exit 300ms before removal
+
+    return () => clearTimeout(exitTimer)
+  }, [duration])
 
   const icons = {
     success: <CheckCircle2 className="w-5 h-5" />,
@@ -29,9 +40,18 @@ function Toast({ id, type, message }) {
     info: 'text-blue-500',
   }
 
+  const handleClose = () => {
+    setIsExiting(true)
+    setTimeout(() => {
+      removeToast(id)
+    }, 300) // Wait for animation to complete
+  }
+
   return (
     <div
-      className={`flex items-start space-x-3 px-4 py-3 rounded-lg border-l-4 shadow-lg backdrop-blur-sm ${styles[type]} animate-slide-in-right`}
+      className={`flex items-start space-x-3 px-4 py-3 rounded-lg border-l-4 shadow-lg backdrop-blur-sm ${styles[type]} ${
+        isExiting ? 'animate-slide-out-right' : 'animate-slide-in-right'
+      }`}
       style={{
         minWidth: '300px',
         maxWidth: '500px',
@@ -42,7 +62,7 @@ function Toast({ id, type, message }) {
       </div>
       <p className="flex-1 text-sm font-medium">{message}</p>
       <button
-        onClick={() => removeToast(id)}
+        onClick={handleClose}
         className="text-gray-400 hover:text-gray-600 transition-colors"
       >
         <X className="w-4 h-4" />
