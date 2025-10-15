@@ -36,6 +36,22 @@ function Library() {
   const fileInputRef = useRef(null)
   const pasteAreaRef = useRef(null)
 
+  // Helper function to format file sizes
+  const formatFileSize = (bytes) => {
+    if (!bytes) return 'Unknown'
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+  }
+
+  // Helper function to calculate savings
+  const getSavingsInfo = (image) => {
+    if (!image.originalSize || !image.size) return null
+    const savings = image.originalSize - image.size
+    const percentage = Math.round((savings / image.originalSize) * 100)
+    return { savings, percentage }
+  }
+
   useEffect(() => {
     loadImages()
   }, [])
@@ -106,7 +122,14 @@ function Library() {
       const result = await imagesAPI.upload(file)
       if (result.success) {
         addImage(result.data)
-        useToastStore.getState().success(`Image uploaded: ${file.name}`)
+        
+        // Show optimization info if available
+        const savingsInfo = getSavingsInfo(result.data)
+        let message = `Image uploaded: ${file.name}`
+        if (savingsInfo) {
+          message += ` • Optimized to WebP (${savingsInfo.percentage}% smaller)`
+        }
+        useToastStore.getState().success(message)
       }
     } catch (error) {
       console.error('Failed to upload image:', error)
@@ -124,15 +147,25 @@ function Library() {
       setUploading(true)
       
       let successCount = 0
+      let totalSavings = 0
       for (const file of files) {
         const result = await imagesAPI.upload(file)
         if (result.success) {
           addImage(result.data)
           successCount++
+          // Track optimization savings
+          if (result.data.originalSize && result.data.size) {
+            totalSavings += (result.data.originalSize - result.data.size)
+          }
         }
       }
       
-      useToastStore.getState().success(`Successfully uploaded ${successCount} image(s)`)
+      let message = `Successfully uploaded ${successCount} image(s)`
+      if (totalSavings > 0) {
+        const savingsPercent = Math.round((totalSavings / files.reduce((sum, f) => sum + f.size, 0)) * 100)
+        message += ` • Optimized to WebP (saved ${savingsPercent}%)`
+      }
+      useToastStore.getState().success(message)
     } catch (error) {
       console.error('Failed to upload images:', error)
       useToastStore.getState().error('Failed to upload one or more images')
@@ -461,9 +494,26 @@ function Library() {
                   <p className="text-xs text-gray-700 truncate" title={image.originalName}>
                     {image.originalName || image.filename}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {image.width} × {image.height}
-                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-500">
+                      {image.width} × {image.height}
+                    </p>
+                    {image.mimeType === 'image/webp' && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">
+                        WebP
+                      </span>
+                    )}
+                  </div>
+                  {image.size && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {formatFileSize(image.size)}
+                      {getSavingsInfo(image) && (
+                        <span className="text-green-600 ml-1">
+                          (↓{getSavingsInfo(image).percentage}%)
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 {/* Action Buttons (on hover) */}
@@ -541,11 +591,19 @@ function Library() {
                   className="w-16 h-16 object-cover rounded"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {selectedImage.originalName || selectedImage.filename}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {selectedImage.originalName || selectedImage.filename}
+                    </p>
+                    {selectedImage.mimeType === 'image/webp' && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium flex-shrink-0">
+                        WebP
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500">
                     {selectedImage.width} × {selectedImage.height}
+                    {selectedImage.size && ` • ${formatFileSize(selectedImage.size)}`}
                   </p>
                 </div>
               </div>
@@ -613,11 +671,19 @@ function Library() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-500 mb-1">Current name:</p>
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {imageToRename.originalName || imageToRename.filename}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {imageToRename.originalName || imageToRename.filename}
+                    </p>
+                    {imageToRename.mimeType === 'image/webp' && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium flex-shrink-0">
+                        WebP
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">
                     {imageToRename.width} × {imageToRename.height}
+                    {imageToRename.size && ` • ${formatFileSize(imageToRename.size)}`}
                   </p>
                 </div>
               </div>
