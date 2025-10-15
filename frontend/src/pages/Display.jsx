@@ -85,7 +85,7 @@ function Display() {
         <img
           src={currentImageUrl}
           alt={`Slot ${slotId}`}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
+          className={`w-full h-full object-contain transition-opacity duration-300 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           onLoad={() => setImageLoaded(true)}
