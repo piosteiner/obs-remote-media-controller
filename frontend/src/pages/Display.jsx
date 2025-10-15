@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import websocketService from '../services/websocket'
+import { slotsAPI } from '../services/api'
 import useStore from '../store'
 
 /**
@@ -32,6 +33,20 @@ function Display() {
   // Connect WebSocket on mount
   useEffect(() => {
     console.log(`Display page mounted for slot ${slotId}`)
+    
+    // Fetch initial slot data
+    const fetchSlotData = async () => {
+      try {
+        const result = await slotsAPI.getAll()
+        if (result.success) {
+          useStore.getState().setSlots(result.data.slots)
+        }
+      } catch (error) {
+        console.error('Failed to fetch slot data:', error)
+      }
+    }
+    
+    fetchSlotData()
     websocketService.connect()
 
     // Ping every 30 seconds to keep connection alive

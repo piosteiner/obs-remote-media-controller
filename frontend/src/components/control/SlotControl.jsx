@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link as LinkIcon, Upload, X, Image as ImageIcon, Clipboard, Library } from 'lucide-react'
+import { Link as LinkIcon, Upload, X, Image as ImageIcon, Clipboard, Library, Save } from 'lucide-react'
 import { slotsAPI, imagesAPI } from '../../services/api'
 import websocketService from '../../services/websocket'
 import useStore from '../../store'
@@ -199,18 +199,56 @@ function SlotControl({ slotId, slotData }) {
     }
   }
 
+  // Handle save to library
+  const handleSaveToLibrary = async () => {
+    if (!imageUrl) {
+      useToastStore.getState().warning('No image to save')
+      return
+    }
+
+    try {
+      setUploading(true)
+      
+      // Get the image name from URL or generate one
+      const urlParts = imageUrl.split('/')
+      const fileName = urlParts[urlParts.length - 1] || `slot-${slotId}-${Date.now()}.png`
+      
+      // Add URL to library
+      const result = await imagesAPI.addUrl(imageUrl, fileName)
+      
+      if (result.success) {
+        useToastStore.getState().success(`Saved "${fileName}" to library!`)
+      }
+    } catch (error) {
+      console.error('Failed to save to library:', error)
+      useToastStore.getState().error('Failed to save to library. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Slot {slotId}</h3>
         {imageUrl && (
-          <button
-            onClick={handleClear}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            title="Clear slot"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSaveToLibrary}
+              disabled={uploading}
+              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save to library"
+            >
+              <Save className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleClear}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Clear slot"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         )}
       </div>
 
