@@ -66,6 +66,7 @@ export const scenesAPI = {
   update: (id, data) => api.put(`/scenes/${id}`, data),
   delete: (id) => api.delete(`/scenes/${id}`),
   load: (id) => api.post(`/scenes/${id}/load`),
+  capture: (id) => api.post(`/scenes/${id}/capture`),
 }
 
 export const imagesAPI = {

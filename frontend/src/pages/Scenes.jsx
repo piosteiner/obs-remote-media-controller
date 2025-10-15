@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Play } from 'lucide-react'
+import { Plus, Edit, Trash2, Play, Camera } from 'lucide-react'
 import Header from '../components/common/Header'
 import Modal from '../components/common/Modal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
@@ -58,6 +58,25 @@ function Scenes() {
     } catch (error) {
       console.error('Failed to load scene:', error)
       useToastStore.getState().error('Failed to load scene. Please try again.')
+    }
+  }
+
+  const handleCaptureScene = async (sceneId, sceneName) => {
+    try {
+      // Capture current slots to the scene
+      const result = await scenesAPI.capture(sceneId)
+      
+      if (result.success) {
+        const slotCount = result.data.slotsCaptured || Object.keys(result.data.slots || {}).length
+        useToastStore.getState().success(
+          `Scene "${sceneName}" updated with ${slotCount} slot${slotCount !== 1 ? 's' : ''}!`
+        )
+        // Reload scenes to get updated data
+        await loadScenes()
+      }
+    } catch (error) {
+      console.error('Failed to capture scene:', error)
+      useToastStore.getState().error('Failed to update scene. Please try again.')
     }
   }
 
@@ -179,13 +198,24 @@ function Scenes() {
                   </p>
                 </div>
 
-                <button
-                  onClick={() => handleLoadScene(scene.id)}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700"
-                >
-                  <Play className="w-4 h-4" />
-                  <span>Load Scene</span>
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleCaptureScene(scene.id, scene.name)}
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                    title="Update scene with current slots"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Update</span>
+                  </button>
+                  <button
+                    onClick={() => handleLoadScene(scene.id)}
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                    title="Load this scene"
+                  >
+                    <Play className="w-4 h-4" />
+                    <span>Load</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
