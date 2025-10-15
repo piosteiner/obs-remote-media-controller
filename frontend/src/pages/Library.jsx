@@ -263,6 +263,17 @@ function Library() {
               />
             </div>
 
+            {/* Add URL Button */}
+            <button
+              onClick={() => setShowUrlInput(!showUrlInput)}
+              disabled={uploading}
+              className="flex items-center justify-center space-x-2 px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 disabled:opacity-50"
+              title="Add image by URL"
+            >
+              <LinkIcon className="w-5 h-5" />
+              <span>Add URL</span>
+            </button>
+
             {/* Paste Button */}
             {clipboardSupported && (
               <button
@@ -295,6 +306,38 @@ function Library() {
               className="hidden"
             />
           </div>
+
+          {/* URL Input Form */}
+          {showUrlInput && (
+            <form onSubmit={handleUrlSubmit} className="mt-4 flex gap-2">
+              <input
+                type="url"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                autoFocus
+                disabled={uploading}
+              />
+              <button
+                type="submit"
+                disabled={uploading || !urlInput.trim()}
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUrlInput(false)
+                  setUrlInput('')
+                }}
+                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
 
           {/* Paste Area */}
           {showPasteArea && (
