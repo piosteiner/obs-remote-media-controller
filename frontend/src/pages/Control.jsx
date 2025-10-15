@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ImagePlus, Trash2, Link as LinkIcon, Image as ImageIcon, Layers } from 'lucide-react'
 import websocketService from '../services/websocket'
-import { slotsAPI, imagesAPI } from '../services/api'
+import { slotsAPI, scenesAPI } from '../services/api'
 import useStore from '../store'
+import useToastStore from '../store/toast'
 import Header from '../components/common/Header'
 import ConnectionStatus from '../components/common/ConnectionStatus'
 import SlotControl from '../components/control/SlotControl'
@@ -36,17 +37,16 @@ function Control() {
         // Fetch initial data
         const [slotsData, scenesData] = await Promise.all([
           slotsAPI.getAll(),
-          // scenesAPI.getAll(), // Uncomment when backend is ready
+          scenesAPI.getAll(), // Backend is ready!
         ])
         
         if (slotsData.success) {
           setSlots(slotsData.data.slots)
         }
         
-        // Uncomment when backend is ready
-        // if (scenesData.success) {
-        //   setScenes(scenesData.data.scenes)
-        // }
+        if (scenesData.success) {
+          setScenes(scenesData.data.scenes)
+        }
         
       } catch (error) {
         console.error('Failed to initialize:', error)
@@ -61,11 +61,16 @@ function Control() {
   // Handle scene load
   const handleLoadScene = async (sceneId) => {
     try {
-      // await scenesAPI.load(sceneId) // API call
-      websocketService.loadScene(sceneId) // WebSocket for real-time
+      // Call REST API to load scene
+      await scenesAPI.load(sceneId)
+      
+      // Backend will broadcast via WebSocket automatically
       setCurrentScene(sceneId)
+      
+      useToastStore.getState().success('Scene loaded!')
     } catch (error) {
       console.error('Failed to load scene:', error)
+      useToastStore.getState().error('Failed to load scene')
     }
   }
 

@@ -26,19 +26,15 @@ function Scenes() {
   const loadScenes = async () => {
     try {
       setLoading(true)
-      // Uncomment when backend is ready
-      // const result = await scenesAPI.getAll()
-      // if (result.success) {
-      //   setScenes(result.data.scenes)
-      // }
       
-      // Mock data for now
-      setScenes([
-        { id: 1, name: 'Intro', description: 'Opening scene', slots: { '1': 1 } },
-        { id: 2, name: 'Product Demo', description: '3 products', slots: { '1': 2, '2': 3, '3': 4 } },
-      ])
+      // Load scenes from backend
+      const result = await scenesAPI.getAll()
+      if (result.success) {
+        setScenes(result.data.scenes)
+      }
     } catch (error) {
       console.error('Failed to load scenes:', error)
+      useToastStore.getState().error('Failed to load scenes from server')
     } finally {
       setLoading(false)
     }
@@ -46,10 +42,16 @@ function Scenes() {
 
   const handleLoadScene = async (sceneId) => {
     try {
-      // await scenesAPI.load(sceneId)
-      websocketService.loadScene(sceneId)
+      // Call REST API to load scene (updates backend state)
+      await scenesAPI.load(sceneId)
+      
+      // WebSocket will broadcast the update to all clients
+      // No need to call websocketService.loadScene() separately
+      
+      useToastStore.getState().success('Scene loaded successfully!')
     } catch (error) {
       console.error('Failed to load scene:', error)
+      useToastStore.getState().error('Failed to load scene. Please try again.')
     }
   }
 
@@ -57,28 +59,35 @@ function Scenes() {
     if (!confirm('Are you sure you want to delete this scene?')) return
 
     try {
-      // await scenesAPI.delete(sceneId)
+      await scenesAPI.delete(sceneId)
       deleteScene(sceneId)
+      useToastStore.getState().success('Scene deleted successfully!')
     } catch (error) {
       console.error('Failed to delete scene:', error)
+      useToastStore.getState().error('Failed to delete scene. Please try again.')
     }
   }
 
-  const handleCreateScene = () => {
-    // For now, create a scene from current slots
+  const handleCreateScene = async () => {
     const sceneName = prompt('Enter scene name:')
     if (!sceneName) return
 
-    const newScene = {
-      id: Date.now(),
-      name: sceneName,
-      description: 'Created from current slots',
-      slots: { ...slots }
-    }
+    try {
+      // Create scene on backend
+      const result = await scenesAPI.create({
+        name: sceneName,
+        description: 'Created from current slots',
+        slots: { ...slots }
+      })
 
-    // Mock - would call API in production
-    addScene(newScene)
-    useToastStore.getState().success('Scene created! (Backend integration pending)')
+      if (result.success) {
+        addScene(result.data)
+        useToastStore.getState().success(`Scene "${sceneName}" created successfully!`)
+      }
+    } catch (error) {
+      console.error('Failed to create scene:', error)
+      useToastStore.getState().error('Failed to create scene. Please try again.')
+    }
   }
 
   if (loading) {
