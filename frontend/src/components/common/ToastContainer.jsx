@@ -49,7 +49,7 @@ function Toast({ id, type, message, duration = 3000 }) {
 
   return (
     <div
-      className={`flex items-start space-x-3 px-4 py-3 rounded-lg border-l-4 shadow-lg backdrop-blur-sm ${styles[type]} ${
+      className={`pointer-events-auto flex items-start space-x-3 px-4 py-3 rounded-lg border-l-4 shadow-lg backdrop-blur-sm ${styles[type]} ${
         isExiting ? 'animate-slide-out-right' : 'animate-slide-in-right'
       }`}
       style={{
@@ -79,12 +79,12 @@ function ToastContainer() {
   const toasts = useToastStore(state => state.toasts)
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none">
-      <div className="flex flex-col space-y-2 pointer-events-auto">
-        {toasts.map((toast) => (
-          <Toast key={toast.id} {...toast} />
-        ))}
-      </div>
+    // Sits below the sticky header so toasts never cover the navigation;
+    // only the toasts themselves catch clicks, not the empty container area
+    <div className="fixed top-20 right-4 z-50 flex flex-col space-y-2 pointer-events-none">
+      {toasts.map((toast) => (
+        <Toast key={toast.id} {...toast} />
+      ))}
     </div>
   )
 }

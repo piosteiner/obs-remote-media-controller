@@ -13,8 +13,9 @@ const useToastStore = create((set) => ({
       id,
       type: 'info', // 'success', 'error', 'warning', 'info'
       message: '',
-      duration: 3000,
       ...toast,
+      // Helpers pass duration: undefined, which must not override the default
+      duration: toast.duration ?? 3000,
     }
     
     set((state) => ({
