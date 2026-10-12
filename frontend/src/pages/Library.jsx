@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { Upload, Trash2, Search, Clipboard, X, Link as LinkIcon, Edit2 } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { Upload, Trash2, Search, Clipboard, X, Link as LinkIcon, Edit2, RotateCw, AlertCircle } from 'lucide-react'
 import Header from '../components/common/Header'
 import Modal from '../components/common/Modal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
@@ -7,6 +7,24 @@ import { imagesAPI, slotsAPI } from '../services/api'
 import websocketService from '../services/websocket'
 import useStore from '../store'
 import useToastStore from '../store/toast'
+
+const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp']
+const MAX_UPLOAD_SIZE = 10 * 1024 * 1024 // Matches backend and nginx limit
+const UPLOAD_CONCURRENCY = 3
+
+// Run worker over items with at most `limit` in flight, keeping result order
+async function runWithConcurrency(items, limit, worker) {
+  const results = []
+  let next = 0
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const index = next++
+      results[index] = await worker(items[index])
+    }
+  })
+  await Promise.all(runners)
+  return results
+}
 
 /**
  * Library Page - Image library management
@@ -33,6 +51,8 @@ function Library() {
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [imageToRename, setImageToRename] = useState(null)
   const [newImageName, setNewImageName] = useState('')
+  const [pendingUploads, setPendingUploads] = useState([])
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef(null)
   const pasteAreaRef = useRef(null)
 
@@ -115,67 +135,130 @@ function Library() {
     }
   }
 
-  // Common upload logic
-  const uploadFile = async (file) => {
+  const removePending = (key) => {
+    setPendingUploads(prev => {
+      const item = prev.find(p => p.key === key)
+      if (item) URL.revokeObjectURL(item.preview)
+      return prev.filter(p => p.key !== key)
+    })
+  }
+
+  // Upload one pending item; its placeholder tile is replaced by the real image on success
+  const uploadPending = async (item) => {
+    setPendingUploads(prev => prev.map(p => p.key === item.key ? { ...p, failed: false } : p))
     try {
-      setUploading(true)
-      const result = await imagesAPI.upload(file)
-      if (result.success) {
-        addImage(result.data)
-        
-        // Show optimization info if available
-        const savingsInfo = getSavingsInfo(result.data)
-        let message = `Image uploaded: ${file.name}`
-        if (savingsInfo) {
-          message += ` • Optimized to WebP (${savingsInfo.percentage}% smaller)`
-        }
-        useToastStore.getState().success(message)
-      }
+      const result = await imagesAPI.upload(item.file)
+      if (!result.success) throw new Error('Upload rejected')
+      addImage(result.data)
+      removePending(item.key)
+      return result.data
     } catch (error) {
-      console.error('Failed to upload image:', error)
-      useToastStore.getState().error('Failed to upload image. Please try again.')
-    } finally {
-      setUploading(false)
+      console.error(`Failed to upload ${item.name}:`, error)
+      setPendingUploads(prev => prev.map(p => p.key === item.key ? { ...p, failed: true } : p))
+      return null
     }
   }
 
-  const handleUpload = async (e) => {
-    const files = Array.from(e.target.files || [])
+  // Common upload logic for the file picker, drag & drop and clipboard paste
+  const uploadFiles = async (fileList) => {
+    const files = Array.from(fileList || [])
     if (files.length === 0) return
 
-    try {
-      setUploading(true)
-      
-      let successCount = 0
-      let totalSavings = 0
-      for (const file of files) {
-        const result = await imagesAPI.upload(file)
-        if (result.success) {
-          addImage(result.data)
-          successCount++
-          // Track optimization savings
-          if (result.data.originalSize && result.data.size) {
-            totalSavings += (result.data.originalSize - result.data.size)
-          }
-        }
-      }
-      
-      let message = `Successfully uploaded ${successCount} image(s)`
-      if (totalSavings > 0) {
-        const savingsPercent = Math.round((totalSavings / files.reduce((sum, f) => sum + f.size, 0)) * 100)
-        message += ` • Optimized to WebP (saved ${savingsPercent}%)`
+    const valid = files.filter(f => ACCEPTED_TYPES.includes(f.type) && f.size <= MAX_UPLOAD_SIZE)
+    const skipped = files.length - valid.length
+    if (skipped > 0) {
+      useToastStore.getState().warning(`Skipped ${skipped} file(s): only PNG, JPG, GIF or WebP up to 10 MB`)
+    }
+    if (valid.length === 0) return
+
+    // Show local previews immediately, before the server has answered
+    const items = valid.map(file => ({
+      key: `${Date.now()}-${Math.random()}`,
+      file,
+      name: file.name,
+      preview: URL.createObjectURL(file),
+      failed: false
+    }))
+    setPendingUploads(prev => [...items, ...prev])
+
+    const uploaded = (await runWithConcurrency(items, UPLOAD_CONCURRENCY, uploadPending)).filter(Boolean)
+    const failedCount = items.length - uploaded.length
+
+    if (uploaded.length > 0) {
+      const originalTotal = uploaded.reduce((sum, img) => sum + (img.originalSize || 0), 0)
+      const savedTotal = uploaded.reduce((sum, img) => sum + (getSavingsInfo(img)?.savings || 0), 0)
+      let message = uploaded.length === 1
+        ? `Image uploaded: ${uploaded[0].originalName}`
+        : `Uploaded ${uploaded.length} images`
+      if (savedTotal > 0 && originalTotal > 0) {
+        message += ` • WebP (${Math.round((savedTotal / originalTotal) * 100)}% smaller)`
       }
       useToastStore.getState().success(message)
-    } catch (error) {
-      console.error('Failed to upload images:', error)
-      useToastStore.getState().error('Failed to upload one or more images')
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+    }
+    if (failedCount > 0) {
+      useToastStore.getState().error(`${failedCount} upload(s) failed. Use retry on the red tile.`)
     }
   }
+
+  const retryUpload = async (item) => {
+    const image = await uploadPending(item)
+    if (image) {
+      useToastStore.getState().success(`Image uploaded: ${image.originalName}`)
+    }
+  }
+
+  const uploadFile = (file) => uploadFiles([file])
+
+  const handleUpload = (e) => {
+    uploadFiles(e.target.files)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  // Drag & drop files anywhere on the page
+  const uploadFilesRef = useRef(uploadFiles)
+  uploadFilesRef.current = uploadFiles
+
+  useEffect(() => {
+    let depth = 0
+    const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files')
+
+    const onDragEnter = (e) => {
+      if (!hasFiles(e)) return
+      e.preventDefault()
+      depth++
+      setIsDragging(true)
+    }
+    const onDragOver = (e) => {
+      if (!hasFiles(e)) return
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'copy'
+    }
+    const onDragLeave = (e) => {
+      if (!hasFiles(e)) return
+      depth = Math.max(0, depth - 1)
+      if (depth === 0) setIsDragging(false)
+    }
+    const onDrop = (e) => {
+      if (!hasFiles(e)) return
+      e.preventDefault()
+      depth = 0
+      setIsDragging(false)
+      uploadFilesRef.current(e.dataTransfer.files)
+    }
+
+    window.addEventListener('dragenter', onDragEnter)
+    window.addEventListener('dragover', onDragOver)
+    window.addEventListener('dragleave', onDragLeave)
+    window.addEventListener('drop', onDrop)
+    return () => {
+      window.removeEventListener('dragenter', onDragEnter)
+      window.removeEventListener('dragover', onDragOver)
+      window.removeEventListener('dragleave', onDragLeave)
+      window.removeEventListener('drop', onDrop)
+    }
+  }, [])
 
   // Handle clipboard paste
   const handlePasteFromClipboard = async () => {
@@ -204,7 +287,8 @@ function Library() {
             return
           }
 
-          await uploadFile(imageFile)
+          setUploading(false)
+          uploadFile(imageFile)
           return
         } catch (clipboardError) {
           console.log('Clipboard API failed, trying paste event approach:', clipboardError)
@@ -329,10 +413,20 @@ function Library() {
     }
   }
 
-  const filteredImages = images.filter(img =>
+  // Newest first, so fresh uploads show up at the top
+  const sortedImages = useMemo(
+    () => [...images].sort((a, b) =>
+      (b.createdAt || '').localeCompare(a.createdAt || '') || (b.id || 0) - (a.id || 0)
+    ),
+    [images]
+  )
+
+  const filteredImages = sortedImages.filter(img =>
     img.filename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     img.originalName?.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const activeUploads = pendingUploads.filter(p => !p.failed).length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -340,7 +434,12 @@ function Library() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Image Library</h1>
+          <div className="flex items-baseline justify-between gap-4 mb-4">
+            <h1 className="text-2xl font-bold text-gray-900">Image Library</h1>
+            <p className="hidden sm:block text-sm text-gray-500">
+              Tip: drag &amp; drop images anywhere on this page to upload
+            </p>
+          </div>
           
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
@@ -382,11 +481,10 @@ function Library() {
             {/* Upload Button */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
               className="flex items-center justify-center space-x-2 px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50"
             >
               <Upload className="w-5 h-5" />
-              <span>{uploading ? 'Uploading...' : 'Upload Images'}</span>
+              <span>{activeUploads > 0 ? `Uploading ${activeUploads}...` : 'Upload Images'}</span>
             </button>
             
             <input
@@ -458,7 +556,7 @@ function Library() {
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
-        ) : filteredImages.length === 0 ? (
+        ) : filteredImages.length === 0 && pendingUploads.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">
               {searchQuery ? 'No images found' : 'No images yet. Upload your first image!'}
@@ -474,6 +572,55 @@ function Library() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {/* Uploads in progress (local preview until the server responds) */}
+            {pendingUploads.map((item) => (
+              <div
+                key={item.key}
+                className={`relative bg-white rounded-lg border overflow-hidden ${
+                  item.failed ? 'border-red-400' : 'border-primary-300'
+                }`}
+              >
+                <div className="aspect-square bg-gray-100 overflow-hidden relative">
+                  <img
+                    src={item.preview}
+                    alt={item.name}
+                    className={`w-full h-full object-cover ${item.failed ? 'opacity-40' : 'opacity-60'}`}
+                  />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                    {item.failed ? (
+                      <>
+                        <AlertCircle className="w-8 h-8 text-red-600" />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => retryUpload(item)}
+                            className="flex items-center gap-1 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded shadow hover:bg-gray-100"
+                            title="Retry upload"
+                          >
+                            <RotateCw className="w-3 h-3" /> Retry
+                          </button>
+                          <button
+                            onClick={() => removePending(item.key)}
+                            className="p-1 bg-white text-gray-600 rounded shadow hover:bg-gray-100"
+                            title="Dismiss"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                    )}
+                  </div>
+                </div>
+                <div className="p-2">
+                  <p className="text-xs text-gray-700 truncate" title={item.name}>{item.name}</p>
+                  <p className={`text-xs mt-1 ${item.failed ? 'text-red-600' : 'text-primary-600'}`}>
+                    {item.failed ? 'Upload failed' : 'Uploading...'}
+                  </p>
+                </div>
+              </div>
+            ))}
+
             {filteredImages.map((image) => (
               <div
                 key={image.id}
@@ -484,6 +631,8 @@ function Library() {
                   <img
                     src={image.url}
                     alt={image.originalName}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover cursor-pointer"
                     onClick={() => handleAssignToSlot(image)}
                   />
@@ -496,7 +645,7 @@ function Library() {
                   </p>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-gray-500">
-                      {image.width} × {image.height}
+                      {image.width && image.height ? `${image.width} × ${image.height}` : ''}
                     </p>
                     {image.mimeType === 'image/webp' && (
                       <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">
@@ -552,6 +701,17 @@ function Library() {
           </div>
         )}
       </main>
+
+      {/* Drag & drop overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-40 pointer-events-none flex items-center justify-center bg-primary-600 bg-opacity-10 border-4 border-dashed border-primary-500">
+          <div className="flex flex-col items-center gap-2 px-8 py-6 bg-white rounded-xl shadow-lg">
+            <Upload className="w-10 h-10 text-primary-600" />
+            <p className="text-lg font-semibold text-gray-900">Drop images to upload</p>
+            <p className="text-sm text-gray-500">PNG, JPG, GIF or WebP up to 10 MB</p>
+          </div>
+        </div>
+      )}
 
       {/* Assign to Slot Modal */}
       <Modal

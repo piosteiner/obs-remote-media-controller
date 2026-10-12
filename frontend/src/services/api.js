@@ -77,6 +77,9 @@ export const imagesAPI = {
     formData.append('image', file)
     return api.post('/images/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      // Uploads on slow connections take longer than the default 10s; timing out
+      // client-side while the server still saves the image made it look lost
+      timeout: 120000,
     })
   },
   addUrl: (url, name) => api.post('/images/url', { url, name }),
