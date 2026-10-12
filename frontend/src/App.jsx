@@ -5,17 +5,18 @@ import Scenes from './pages/Scenes'
 import Library from './pages/Library'
 import Help from './pages/Help'
 import ToastContainer from './components/common/ToastContainer'
+import AuthGate from './components/common/AuthGate'
 
 function App() {
   return (
     <>
       <Routes>
         <Route path="/display" element={<Display />} />
-        <Route path="/control" element={<Control />} />
-        <Route path="/scenes" element={<Scenes />} />
-        <Route path="/library" element={<Library />} />
-        <Route path="/help" element={<Help />} />
-        <Route path="/" element={<Control />} />
+        <Route path="/control" element={<AuthGate><Control /></AuthGate>} />
+        <Route path="/scenes" element={<AuthGate><Scenes /></AuthGate>} />
+        <Route path="/library" element={<AuthGate><Library /></AuthGate>} />
+        <Route path="/help" element={<AuthGate><Help /></AuthGate>} />
+        <Route path="/" element={<AuthGate><Control /></AuthGate>} />
       </Routes>
       <ToastContainer />
     </>

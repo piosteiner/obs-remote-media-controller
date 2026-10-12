@@ -34,6 +34,18 @@ const upload = multer({
   }
 });
 
+const THUMBNAIL_SIZE = 400;
+
+// Small preview for library grids; the full image is only loaded when shown
+async function createThumbnail(sourcePath, filename) {
+  const thumbnailFilename = `thumb_${path.parse(filename).name}.webp`;
+  await sharp(sourcePath)
+    .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, { fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 75, effort: 4 })
+    .toFile(path.join(uploadsDir, thumbnailFilename));
+  return thumbnailFilename;
+}
+
 // Convert image to WebP format
 async function convertToWebP(inputPath, originalName) {
   const baseName = path.parse(originalName).name;
@@ -45,7 +57,7 @@ async function convertToWebP(inputPath, originalName) {
     const info = await sharp(inputPath)
       .webp({ 
         quality: 85,     // High quality
-        effort: 6,       // Better compression
+        effort: 4,       // Near-max compression at a fraction of effort 6's CPU time
         lossless: false  // Use lossy compression for smaller files
       })
       .toFile(webpPath);
@@ -59,6 +71,8 @@ async function convertToWebP(inputPath, originalName) {
       filename: webpFilename,
       path: webpPath,
       size: info.size,
+      width: info.width,
+      height: info.height,
       mimeType: 'image/webp'
     };
   } catch (error) {
@@ -69,10 +83,13 @@ async function convertToWebP(inputPath, originalName) {
     await fs.rename(inputPath, fallbackPath);
     
     const stats = await fs.stat(fallbackPath);
+    const metadata = await sharp(fallbackPath).metadata().catch(() => ({}));
     return {
       filename: fallbackFilename,
       path: fallbackPath,
       size: stats.size,
+      width: metadata.width,
+      height: metadata.height,
       mimeType: 'image/' + path.extname(originalName).slice(1)
     };
   }
@@ -101,6 +118,12 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     const tempPath = path.join(uploadsDir, req.file.filename);
     const convertedImage = await convertToWebP(tempPath, req.file.originalname);
     
+    const thumbnailFilename = await createThumbnail(convertedImage.path, convertedImage.filename)
+      .catch((error) => {
+        console.error('Thumbnail generation failed:', error);
+        return null;
+      });
+
     // Construct the full URL with the proxy path
     const baseUrl = process.env.API_BASE_URL || 'https://api.piogino.ch/obs';
     
@@ -109,6 +132,12 @@ router.post('/upload', upload.single('image'), async (req, res) => {
       filename: convertedImage.filename,
       originalName: req.file.originalname,
       url: `${baseUrl}/uploads/${convertedImage.filename}`,
+      ...(thumbnailFilename && {
+        thumbnailFilename,
+        thumbnailUrl: `${baseUrl}/uploads/${thumbnailFilename}`
+      }),
+      width: convertedImage.width,
+      height: convertedImage.height,
       type: 'uploaded',
       mimeType: convertedImage.mimeType,
       size: convertedImage.size,
@@ -209,8 +238,7 @@ router.put('/:id', async (req, res) => {
 // Delete image
 router.delete('/:id', async (req, res) => {
   const imageId = parseInt(req.params.id);
-  const images = await dataStorage.getImages();
-  const image = images.find(img => img.id === imageId);
+  const image = await dataStorage.deleteImage(imageId);
 
   if (!image) {
     return res.status(404).json({
@@ -219,17 +247,16 @@ router.delete('/:id', async (req, res) => {
     });
   }
 
-  // Delete file if it's an uploaded image
-  if (image.type === 'uploaded' && image.filename) {
+  // Remove files only once the library no longer references them
+  for (const filename of [image.type === 'uploaded' && image.filename, image.thumbnailFilename]) {
+    if (!filename) continue;
     try {
-      await fs.unlink(path.join(uploadsDir, image.filename));
-      console.log(`🗑️  Image file deleted: ${image.filename}`);
+      await fs.unlink(path.join(uploadsDir, filename));
+      console.log(`🗑️  Image file deleted: ${filename}`);
     } catch (error) {
       console.error('Failed to delete file:', error);
     }
   }
-
-  await dataStorage.deleteImage(imageId);
 
   res.json({
     success: true,

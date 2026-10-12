@@ -20,8 +20,15 @@ module.exports = (io) => {
       timestamp: new Date().toISOString(),
     });
 
+    const denyUnlessWriter = () => {
+      if (socket.data.canWrite) return false;
+      socket.emit('error', { message: 'Unauthorized: admin key required' });
+      return true;
+    };
+
     // Handle slot update
     socket.on('slot:update', (data) => {
+      if (denyUnlessWriter()) return;
       const { slot, imageUrl, imageId } = data;
       
       // Update state
@@ -44,6 +51,7 @@ module.exports = (io) => {
 
     // Handle scene load
     socket.on('scene:load', async (data) => {
+      if (denyUnlessWriter()) return;
       const { sceneId } = data;
       
       try {
@@ -88,6 +96,7 @@ module.exports = (io) => {
 
     // Handle slot clear
     socket.on('slot:clear', (data) => {
+      if (denyUnlessWriter()) return;
       const { slot } = data;
       
       slots[slot] = {

@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client'
 import useStore from '../store'
+import { getApiKey } from './auth'
 
 class WebSocketService {
   constructor() {
@@ -21,6 +22,8 @@ class WebSocketService {
       reconnectionDelayMax: 5000,
       reconnectionAttempts: this.maxReconnectAttempts,
       transports: ['websocket', 'polling'],
+      // Read on every (re)connect; without a key the socket can only listen
+      auth: (cb) => cb({ token: getApiKey() }),
     }
 
     if (import.meta.env.PROD && backendURL) {

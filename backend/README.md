@@ -248,6 +248,7 @@ UPLOAD_DIR=./uploads
 MAX_FILE_SIZE=10485760  # 10MB
 ALLOWED_ORIGINS=http://localhost:5173,https://obs-media-control.piogino.ch
 API_BASE_URL=https://api.piogino.ch/obs  # For WebP URL generation
+ADMIN_API_KEY=change-me  # Required for uploads, deletes, slot/scene changes
 DATABASE_PATH=./data
 ```
 

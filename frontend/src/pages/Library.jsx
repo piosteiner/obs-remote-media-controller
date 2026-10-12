@@ -629,7 +629,7 @@ function Library() {
                 {/* Image */}
                 <div className="aspect-square bg-gray-100 overflow-hidden">
                   <img
-                    src={image.url}
+                    src={image.thumbnailUrl || image.url}
                     alt={image.originalName}
                     loading="lazy"
                     decoding="async"

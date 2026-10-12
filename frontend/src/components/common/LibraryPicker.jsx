@@ -101,8 +101,10 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
                   }`}
                 >
                   <img
-                    src={image.url}
+                    src={image.thumbnailUrl || image.url}
                     alt={image.originalName || image.filename}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   

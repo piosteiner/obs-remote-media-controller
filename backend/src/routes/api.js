@@ -4,9 +4,18 @@ const router = express.Router();
 const slotsRoutes = require('./slots');
 const scenesRoutes = require('./scenes');
 const imagesRoutes = require('./images');
+const wrapAsyncRoutes = require('../middleware/asyncRoutes');
+const { requireApiKey, requireApiKeyForWrites } = require('../middleware/auth');
 
-router.use('/slots', slotsRoutes);
-router.use('/scenes', scenesRoutes);
-router.use('/images', imagesRoutes);
+// Lets the frontend check a key before storing it
+router.get('/auth/check', requireApiKey, (req, res) => {
+  res.json({ success: true });
+});
+
+router.use(requireApiKeyForWrites);
+
+router.use('/slots', wrapAsyncRoutes(slotsRoutes));
+router.use('/scenes', wrapAsyncRoutes(scenesRoutes));
+router.use('/images', wrapAsyncRoutes(imagesRoutes));
 
 module.exports = router;

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getApiKey, clearApiKey } from './auth'
 
 // Get backend API URL from environment or default to proxy in dev
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -17,11 +18,10 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Could add auth token here in Phase 2
-    // const token = localStorage.getItem('token')
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`
-    // }
+    const key = getApiKey()
+    if (key) {
+      config.headers['X-API-Key'] = key
+    }
     return config
   },
   (error) => {
@@ -35,7 +35,11 @@ api.interceptors.response.use(
     return response.data
   },
   (error) => {
-    if (error.response) {
+    if (error.response?.status === 401) {
+      // Key missing or changed on the server: ask for it again
+      clearApiKey()
+      return Promise.reject(error.response.data)
+    } else if (error.response) {
       // Server responded with error
       console.error('API Error:', error.response.data)
       return Promise.reject(error.response.data)
@@ -89,6 +93,7 @@ export const imagesAPI = {
 
 export const systemAPI = {
   health: () => api.get('/health'),
+  checkKey: (key) => api.get('/auth/check', { headers: { 'X-API-Key': key } }),
   status: () => api.get('/status'),
 }
 
