@@ -68,6 +68,7 @@ function Library() {
   const getSavingsInfo = (image) => {
     if (!image.originalSize || !image.size) return null
     const savings = image.originalSize - image.size
+    if (savings <= 0) return null // Original was kept (or conversion grew it)
     const percentage = Math.round((savings / image.originalSize) * 100)
     return { savings, percentage }
   }

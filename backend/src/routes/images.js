@@ -46,9 +46,34 @@ async function createThumbnail(sourcePath, filename) {
   return thumbnailFilename;
 }
 
-// Convert image to WebP format
-async function convertToWebP(inputPath, originalName) {
-  const baseName = path.parse(originalName).name;
+const EXTENSIONS = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/gif': '.gif',
+  'image/webp': '.webp'
+};
+
+// Store the uploaded file as-is (all accepted types display in browsers)
+async function keepOriginal(inputPath, mimeType) {
+  const filename = crypto.randomBytes(16).toString('hex') + (EXTENSIONS[mimeType] || '');
+  const filePath = path.join(uploadsDir, filename);
+  await fs.rename(inputPath, filePath);
+
+  const stats = await fs.stat(filePath);
+  const metadata = await sharp(filePath).metadata().catch(() => ({}));
+  return {
+    filename,
+    path: filePath,
+    size: stats.size,
+    width: metadata.width,
+    height: metadata.height,
+    mimeType: mimeType === 'image/jpg' ? 'image/jpeg' : mimeType
+  };
+}
+
+// Convert image to WebP, unless that would make it bigger
+async function convertToWebP(inputPath, originalName, mimeType) {
   const webpFilename = crypto.randomBytes(16).toString('hex') + '.webp';
   const webpPath = path.join(uploadsDir, webpFilename);
   
@@ -61,6 +86,15 @@ async function convertToWebP(inputPath, originalName) {
         lossless: false  // Use lossy compression for smaller files
       })
       .toFile(webpPath);
+
+    // Re-encoding an already well-compressed image can make it larger;
+    // in that case keep the original file instead
+    const originalSize = (await fs.stat(inputPath)).size;
+    if (info.size >= originalSize) {
+      await fs.unlink(webpPath);
+      console.log(`↩️  Kept original ${originalName}: WebP would be ${(info.size / 1024).toFixed(2)} KB vs ${(originalSize / 1024).toFixed(2)} KB`);
+      return keepOriginal(inputPath, mimeType);
+    }
     
     // Delete the temporary original file
     await fs.unlink(inputPath);
@@ -76,22 +110,10 @@ async function convertToWebP(inputPath, originalName) {
       mimeType: 'image/webp'
     };
   } catch (error) {
-    // If conversion fails, keep the original file but rename it
+    // If conversion fails, keep the original file
     console.error('WebP conversion failed, keeping original:', error);
-    const fallbackFilename = crypto.randomBytes(16).toString('hex') + path.extname(originalName);
-    const fallbackPath = path.join(uploadsDir, fallbackFilename);
-    await fs.rename(inputPath, fallbackPath);
-    
-    const stats = await fs.stat(fallbackPath);
-    const metadata = await sharp(fallbackPath).metadata().catch(() => ({}));
-    return {
-      filename: fallbackFilename,
-      path: fallbackPath,
-      size: stats.size,
-      width: metadata.width,
-      height: metadata.height,
-      mimeType: 'image/' + path.extname(originalName).slice(1)
-    };
+    await fs.unlink(webpPath).catch(() => {});
+    return keepOriginal(inputPath, mimeType);
   }
 }
 
@@ -116,7 +138,7 @@ router.post('/upload', upload.single('image'), async (req, res) => {
   try {
     // Convert image to WebP
     const tempPath = path.join(uploadsDir, req.file.filename);
-    const convertedImage = await convertToWebP(tempPath, req.file.originalname);
+    const convertedImage = await convertToWebP(tempPath, req.file.originalname, req.file.mimetype);
     
     const thumbnailFilename = await createThumbnail(convertedImage.path, convertedImage.filename)
       .catch((error) => {
@@ -143,7 +165,7 @@ router.post('/upload', upload.single('image'), async (req, res) => {
       size: convertedImage.size,
       originalSize: req.file.size,
       createdAt: new Date().toISOString(),
-      format: 'webp'
+      format: convertedImage.mimeType.split('/')[1]
     };
 
     await dataStorage.addImage(imageData);
