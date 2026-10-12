@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MonitorPlay, Layout, Image, Layers, HelpCircle } from 'lucide-react'
+import { MonitorPlay, Layout, Image, Layers, HelpCircle, Youtube } from 'lucide-react'
 
 function Header() {
   const location = useLocation()
@@ -8,6 +8,7 @@ function Header() {
     { path: '/control', label: 'Control', icon: Layout },
     { path: '/scenes', label: 'Scenes', icon: Layers },
     { path: '/library', label: 'Library', icon: Image },
+    { path: '/player', label: 'Player', icon: Youtube },
     { path: '/help', label: 'Help', icon: HelpCircle },
   ]
 

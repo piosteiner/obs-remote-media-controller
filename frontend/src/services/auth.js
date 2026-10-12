@@ -15,6 +15,7 @@ export function setApiKey(key) {
   } catch {
     // Private mode etc.: the key only lasts for this page load
   }
+  window.dispatchEvent(new Event('auth:granted'))
 }
 
 export function clearApiKey() {

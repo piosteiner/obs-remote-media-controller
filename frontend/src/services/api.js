@@ -91,6 +91,25 @@ export const imagesAPI = {
   delete: (id) => api.delete(`/images/${id}`),
 }
 
+export const playerAPI = {
+  get: () => api.get('/player'),
+  load: (url, title) => api.post('/player/load', { url, title }),
+  play: () => api.post('/player/play'),
+  pause: () => api.post('/player/pause'),
+  seek: (position) => api.post('/player/seek', { position }),
+  next: () => api.post('/player/next'),
+  stop: () => api.post('/player/stop'),
+  setRepeat: (mode) => api.put('/player/repeat', { mode }),
+  queueAdd: (url, title) => api.post('/player/queue', { url, title }),
+  queuePlay: (id) => api.post(`/player/queue/${id}/play`),
+  queueMove: (id, direction) => api.post(`/player/queue/${id}/move`, { direction }),
+  queueRemove: (id) => api.delete(`/player/queue/${id}`),
+  queueClear: () => api.delete('/player/queue'),
+  save: (url, name) => api.post('/player/saved', { url, name }),
+  rename: (id, name) => api.put(`/player/saved/${id}`, { name }),
+  removeSaved: (id) => api.delete(`/player/saved/${id}`),
+}
+
 export const systemAPI = {
   health: () => api.get('/health'),
   checkKey: (key) => api.get('/auth/check', { headers: { 'X-API-Key': key } }),

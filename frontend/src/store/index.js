@@ -11,6 +11,9 @@ const useStore = create((set, get) => ({
   // Images library
   images: [],
   
+  // Shared YouTube player state (from the server)
+  player: null,
+
   // Connection status
   isConnected: false,
   
@@ -26,6 +29,8 @@ const useStore = create((set, get) => ({
   })),
   
   setSlots: (slots) => set({ slots }),
+
+  setPlayer: (player) => set({ player }),
   
   clearSlot: (slotId) => set((state) => ({
     slots: {

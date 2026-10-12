@@ -8,7 +8,7 @@ import websocketService from '../../services/websocket'
  * AuthGate Component
  * Asks for the admin key once per browser before showing the control pages
  */
-function AuthGate({ children }) {
+function AuthGate({ children, fallback }) {
   const [hasKey, setHasKey] = useState(() => !!getApiKey())
   const [key, setKey] = useState('')
   const [error, setError] = useState('')
@@ -16,13 +16,18 @@ function AuthGate({ children }) {
 
   useEffect(() => {
     const onAuthRequired = () => setHasKey(false)
+    const onAuthGranted = () => setHasKey(true)
     window.addEventListener('auth:required', onAuthRequired)
+    window.addEventListener('auth:granted', onAuthGranted)
 
     // A stored key may have been changed on the server; a 401 brings the form back
     const stored = getApiKey()
     if (stored) systemAPI.checkKey(stored).catch(() => {})
 
-    return () => window.removeEventListener('auth:required', onAuthRequired)
+    return () => {
+      window.removeEventListener('auth:required', onAuthRequired)
+      window.removeEventListener('auth:granted', onAuthGranted)
+    }
   }, [])
 
   const handleSubmit = async (e) => {
@@ -49,6 +54,8 @@ function AuthGate({ children }) {
   }
 
   if (hasKey) return children
+  // Used where a second key form would be redundant (e.g. the player overlay)
+  if (fallback !== undefined) return fallback
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">

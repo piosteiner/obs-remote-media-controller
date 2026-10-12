@@ -7,9 +7,13 @@ class WebSocketService {
     this.socket = null
     this.reconnectAttempts = 0
     this.maxReconnectAttempts = 5
+    this.clockOffset = 0 // serverTime - Date.now()
   }
 
   connect() {
+    // Several pages and the player overlay call this; keep a single socket
+    if (this.socket) return
+
     // Get backend URL from environment
     const backendURL = import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_BASE_URL
     
@@ -47,6 +51,7 @@ class WebSocketService {
       console.log('✅ WebSocket connected:', this.socket.id)
       useStore.getState().setConnected(true)
       this.reconnectAttempts = 0
+      this.syncClock()
     })
 
     this.socket.on('disconnect', (reason) => {
@@ -84,6 +89,11 @@ class WebSocketService {
       })
       
       useStore.getState().setCurrentScene(data.sceneId)
+    })
+
+    // Shared YouTube player
+    this.socket.on('player:state', (state) => {
+      useStore.getState().setPlayer(state)
     })
 
     // Error events
@@ -128,6 +138,30 @@ class WebSocketService {
     }
 
     this.socket.emit('slot:clear', { slot: slotId })
+  }
+
+  // Estimate the offset to the server clock from a few round trips, keeping
+  // the fastest one (least affected by network delay)
+  async syncClock(samples = 5) {
+    let best = null
+    for (let i = 0; i < samples && this.socket?.connected; i++) {
+      const sentAt = Date.now()
+      const serverTime = await new Promise((resolve) => {
+        this.socket.timeout(3000).emit('player:time', (err, time) => resolve(err ? null : time))
+      })
+      if (serverTime == null) continue
+      const rtt = Date.now() - sentAt
+      if (!best || rtt < best.rtt) best = { rtt, offset: serverTime + rtt / 2 - Date.now() }
+    }
+    if (best) this.clockOffset = best.offset
+  }
+
+  serverNow() {
+    return Date.now() + this.clockOffset
+  }
+
+  reportDuration(sessionId, duration) {
+    this.socket?.emit('player:duration', { sessionId, duration })
   }
 
   ping() {

@@ -38,6 +38,7 @@ app.use('/api', apiRoutes);
 
 // WebSocket handling
 require('./services/websocketService')(io);
+require('./services/playerService').init(io);
 
 // Error handler
 app.use(require('./middleware/errorHandler'));
