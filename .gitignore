@@ -11,6 +11,8 @@ pnpm-debug.log*
 .env
 .env.local
 .env.production
+# Production build settings are public URLs, not secrets
+!frontend/.env.production
 .env.development
 
 # Build outputs
@@ -21,6 +23,8 @@ out/
 # Backend specific
 backend/uploads/*
 !backend/uploads/.gitkeep
+# Runtime data (library, slots, scenes) lives only on the server
+backend/data/
 backend/*.log
 backend/*.db
 backend/*.sqlite
@@ -59,7 +63,6 @@ logs/
 
 # PM2
 .pm2/
-ecosystem.config.js
 
 # SSL certificates (if stored locally)
 *.pem

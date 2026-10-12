@@ -251,41 +251,34 @@ API_BASE_URL=https://api.piogino.ch/obs  # For WebP URL generation
 DATABASE_PATH=./data
 ```
 
-### PM2 Configuration (`ecosystem.config.js`)
-```javascript
-module.exports = {
-  apps: [{
-    name: 'obs-remote-backend',
-    script: 'src/server.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-    env: {
-      NODE_ENV: 'development'
-    },
-    env_production: {
-      NODE_ENV: 'production'
-    }
-  }]
-};
-```
+### PM2 Configuration
+See [`ecosystem.config.js`](ecosystem.config.js) (process `obs-remote-backend`, port 3003).
 
 ## 🚀 Production Deployment
 
+The server runs directly from a git checkout of this repo at
+`/var/www/obs-remote-media-controller/backend`. Runtime state is not in git:
+`data/` (library, slots, scenes), `uploads/` and `.env` live only on the server.
+
+### Deploying backend changes
+```bash
+cd /var/www/obs-remote-media-controller
+git pull
+cd backend && npm ci --omit=dev   # only if dependencies changed
+pm2 restart obs-remote-backend
+```
+
+### Deploying frontend changes
+```bash
+cd /var/www/obs-remote-media-controller/frontend
+npm ci && npm run deploy   # builds with .env.production, publishes to gh-pages
+```
+
 ### PM2 Process Management
 ```bash
-# Start with PM2
-pm2 start ecosystem.config.js --env production
-
-# Enable auto-start on boot
-pm2 startup
+pm2 start ecosystem.config.js   # first start only
 pm2 save
-
-# Monitor
-pm2 list
 pm2 logs obs-remote-backend
-pm2 monit
 ```
 
 ### Nginx Reverse Proxy
