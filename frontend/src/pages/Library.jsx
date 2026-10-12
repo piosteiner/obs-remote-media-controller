@@ -3,6 +3,7 @@ import { Upload, Trash2, Search, Clipboard, X, Link as LinkIcon, Edit2, RotateCw
 import Header from '../components/common/Header'
 import Modal from '../components/common/Modal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import { useImageHoverPreview, ImageHoverPreview } from '../components/common/ImageHoverPreview'
 import { imagesAPI, slotsAPI } from '../services/api'
 import websocketService from '../services/websocket'
 import useStore from '../store'
@@ -54,6 +55,7 @@ function Library() {
   const [pendingUploads, setPendingUploads] = useState([])
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef(null)
+  const { bind: bindPreview, preview } = useImageHoverPreview()
   const pasteAreaRef = useRef(null)
 
   // Helper function to format file sizes
@@ -625,6 +627,7 @@ function Library() {
             {filteredImages.map((image) => (
               <div
                 key={image.id}
+                {...bindPreview(image)}
                 className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
               >
                 {/* Image */}
@@ -634,7 +637,7 @@ function Library() {
                     alt={image.originalName}
                     loading="lazy"
                     decoding="async"
-                    className="w-full h-full object-cover cursor-pointer"
+                    className="w-full h-full object-cover object-top cursor-pointer"
                     onClick={() => handleAssignToSlot(image)}
                   />
                 </div>
@@ -702,6 +705,8 @@ function Library() {
           </div>
         )}
       </main>
+
+      <ImageHoverPreview preview={preview} />
 
       {/* Drag & drop overlay */}
       {isDragging && (
