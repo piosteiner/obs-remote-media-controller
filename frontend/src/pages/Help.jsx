@@ -380,6 +380,9 @@ function Help() {
               <ExternalLink className="w-4 h-4" />
               <span>GitHub Repository</span>
             </a>
+            <a href="/privacy.html" className="flex items-center space-x-2 text-primary-600 hover:text-primary-700">
+              <span>Privacy</span>
+            </a>
           </div>
         </div>
       </main>

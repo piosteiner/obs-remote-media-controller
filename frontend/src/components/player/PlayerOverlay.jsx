@@ -115,6 +115,8 @@ function PlayerOverlay() {
       const mount = document.createElement('div')
       containerRef.current.appendChild(mount)
       ytRef.current = new YT.Player(mount, {
+        // Privacy-enhanced mode: no YouTube cookies before playback
+        host: 'https://www.youtube-nocookie.com',
         width: '100%',
         height: '100%',
         playerVars: { controls: 0, disablekb: 1, rel: 0, playsinline: 1, iv_load_policy: 3, modestbranding: 1 },

@@ -88,6 +88,9 @@ function AuthGate({ children, fallback }) {
           <KeyRound className="w-4 h-4" />
           <span>{checking ? 'Checking...' : 'Unlock'}</span>
         </button>
+        <p className="text-xs text-center text-gray-500">
+          <a href="/privacy.html" className="hover:text-gray-700 underline">Privacy</a>
+        </p>
       </form>
     </div>
   )
