@@ -44,3 +44,22 @@ test('the first image fades in; a cleared slot fades out', async ({ page, reques
   expect(await opacityOf(page, fixture(3).url)).toBeGreaterThan(0.05) // not gone at once
   await expect.poll(() => opacityOf(page, fixture(3).url), { timeout: 5000 }).toBe(0)
 })
+
+test("the slot's preview on the controller changes with the same transition as the display", async ({ page, request }) => {
+  await page.addInitScript(() => localStorage.setItem('obs-admin-key', 'test-key'))
+  await setSlot(request, 2, { imageUrl: fixture(5).url, rotation: null })
+  await page.goto('/control')
+  const preview = (url) => page.evaluate((u) => {
+    const img = [...document.querySelectorAll('[data-testid="slot-2"] img[data-layer]')].find((i) => i.dataset.url === u)
+    return img ? Number(getComputedStyle(img).opacity) : null
+  }, url)
+  await expect.poll(() => preview(fixture(5).url), { timeout: 5000 }).toBe(1)
+  await setSlot(request, 2, { imageUrl: fixture(6).url })
+  await expect.poll(() => preview(fixture(6).url)).toBeGreaterThan(0.05)
+  const inc = await preview(fixture(6).url)
+  const out = await preview(fixture(5).url)
+  expect(inc).toBeLessThan(0.95) // fading, not switched
+  expect(out).toBeLessThan(1) // the old one going at the same time
+  await expect.poll(() => preview(fixture(6).url), { timeout: 5000 }).toBe(1)
+  await expect.poll(() => preview(fixture(5).url), { timeout: 5000 }).toBe(0)
+})

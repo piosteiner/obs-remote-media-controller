@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import websocketService from '../services/websocket'
 import { slotsAPI } from '../services/api'
 import useStore from '../store'
 import useRotation from '../hooks/useRotation'
+import CrossfadeImage, { CHANGE_FADE_MS, rotationFadeMs } from '../components/common/CrossfadeImage'
 
 /**
  * Display Page - Used by OBS Browser Source
@@ -12,21 +13,11 @@ import useRotation from '../hooks/useRotation'
  * Features:
  * - Transparent background
  * - Real-time image updates via WebSocket
- * - Calm changes (players shouldn't notice a switch): once the new image is loaded, it fades in and the old one
- *   fades out at the same time. Their curves complement each other — the new one comes up quickly at first
- *   (FADE_IN), the old one gives way mostly towards the end (FADE_OUT) — so the two never become see-through
- *   together halfway. The first image fades in, a cleared slot fades out.
+ * - Calm changes (players shouldn't notice a switch): components/common/CrossfadeImage.jsx — the same as the
+ *   slot's preview on the controller
  * - Rotation: the slot's images in turn (hooks/useRotation.js — the same image as on every controller)
  * - Automatic reconnection
  */
-export const CHANGE_FADE_MS = 2000
-// in a rotation up to 2.5 s, but never more than a third of the time an image stays
-export const rotationFadeMs = (intervalSec) => Math.min(2500, (intervalSec * 1000) / 3)
-
-const FADE_IN = 'cubic-bezier(0.25, 0.6, 0.45, 1)'
-const FADE_OUT = 'cubic-bezier(0.55, 0, 0.75, 0.4)'
-const EMPTY = { url: null, opacity: 0, ms: 0, ease: 'ease-in-out' }
-
 function Display() {
   const [searchParams] = useSearchParams()
   const slotIdParam = searchParams.get('slot') || '1'
@@ -39,13 +30,6 @@ function Display() {
   const slotData = slots[slotId] || {}
   const { url: targetUrl, rotating } = useRotation(slotData)
   const fadeMs = rotating ? rotationFadeMs(slotData.rotation.intervalSec) : CHANGE_FADE_MS
-
-  // Two layers, both always there (a layer that appears would show at once, without a fade). top: the layer that
-  // shows, or is fading in, the newest image; the other lies under it.
-  const [layers, setLayers] = useState([EMPTY, EMPTY])
-  const [top, setTop] = useState(0)
-  const state = useRef({ layers, top })
-  state.current = { layers, top }
 
   // Connect WebSocket on mount
   useEffect(() => {
@@ -77,56 +61,9 @@ function Display() {
     }
   }, [slotId])
 
-  useEffect(() => {
-    const { layers: now, top: shown } = state.current
-    const set = (i, layer) => setLayers((ls) => ls.map((l, j) => (j === i ? { ...l, ...layer } : l)))
-
-    // cleared: what shows fades out
-    if (!targetUrl) {
-      setLayers((ls) => ls.map((l) => ({ ...l, opacity: 0, ms: fadeMs, ease: 'ease-in-out' })))
-      return undefined
-    }
-    if (now[shown].url === targetUrl && now[shown].opacity > 0) return undefined
-
-    // loaded first (no half-drawn picture); then the new one fades in on top while the old one fades out
-    let cancelled = false
-    const img = new Image()
-    img.onload = img.onerror = () => {
-      if (cancelled) return
-      const outgoing = state.current.top
-      const incoming = 1 - outgoing
-      set(incoming, { url: targetUrl, opacity: 0, ms: 0, ease: FADE_IN }) // invisible, on top …
-      setTop(incoming)
-      // … then both at once (two frames later, so the browser has drawn it at 0 and the transitions run)
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (cancelled) return
-        set(incoming, { opacity: 1, ms: fadeMs, ease: FADE_IN })
-        set(outgoing, { opacity: 0, ms: fadeMs, ease: FADE_OUT })
-      }))
-    }
-    img.src = targetUrl
-    return () => { cancelled = true }
-  }, [targetUrl])
-
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-transparent">
-      {layers.map((layer, i) => (
-        <img
-          key={i}
-          src={layer.url || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}
-          alt=""
-          data-layer={i === top ? 'front' : 'back'}
-          data-url={layer.url || ''}
-          className="absolute inset-0 w-full h-full object-contain"
-          style={{
-            opacity: layer.url ? layer.opacity : 0,
-            transition: `opacity ${layer.ms}ms ${layer.ease}`,
-            zIndex: i === top ? 2 : 1,
-            imageRendering: 'crisp-edges',
-          }}
-          onError={() => layer.url && console.error('Image failed to load:', layer.url)}
-        />
-      ))}
+      <CrossfadeImage url={targetUrl} fadeMs={fadeMs} className="absolute inset-0" alt={`Slot ${slotId}`} imgStyle={{ imageRendering: 'crisp-edges' }} />
 
       {/* Connection indicator (only in development) */}
       {import.meta.env.DEV && (

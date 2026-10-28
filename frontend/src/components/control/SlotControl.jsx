@@ -7,6 +7,7 @@ import useToastStore from '../../store/toast'
 import LibraryPicker from '../common/LibraryPicker'
 import QuickSlots from './QuickSlots'
 import useRotation from '../../hooks/useRotation'
+import CrossfadeImage, { CHANGE_FADE_MS, rotationFadeMs } from '../common/CrossfadeImage'
 
 function SlotControl({ slotId, slotData }) {
   const clearSlot = useStore(state => state.clearSlot)
@@ -265,14 +266,12 @@ function SlotControl({ slotId, slotData }) {
                 Rotating {rotationAt + 1}/{slotData.rotation.items.length} · every {slotData.rotation.intervalSec} s
               </span>
             )}
-            <img
-              key={imageUrl}
-              src={imageUrl}
+            {/* the same transition as the display (OBS) shows */}
+            <CrossfadeImage
+              url={imageUrl}
+              fadeMs={rotating ? rotationFadeMs(slotData.rotation.intervalSec) : CHANGE_FADE_MS}
+              className="absolute inset-0"
               alt={`Slot ${slotId}`}
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+SW1hZ2UgTm90IEZvdW5kPC90ZXh0Pjwvc3ZnPg=='
-              }}
             />
           </div>
         ) : (
