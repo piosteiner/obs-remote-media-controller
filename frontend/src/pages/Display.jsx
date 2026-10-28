@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import websocketService from '../services/websocket'
 import { slotsAPI } from '../services/api'
@@ -16,6 +16,8 @@ import CrossfadeImage, { CHANGE_FADE_MS, rotationFadeMs } from '../components/co
  * - Calm changes (players shouldn't notice a switch): components/common/CrossfadeImage.jsx — the same as the
  *   slot's preview on the controller
  * - Rotation: the slot's images in turn (hooks/useRotation.js — the same image as on every controller)
+ * - Preloading: the slot's quick images and its rotation's are loaded in the background, so a change starts
+ *   its fade at once instead of after a download
  * - Automatic reconnection
  */
 function Display() {
@@ -30,6 +32,22 @@ function Display() {
   const slotData = slots[slotId] || {}
   const { url: targetUrl, rotating } = useRotation(slotData)
   const fadeMs = rotating ? rotationFadeMs(slotData.rotation.intervalSec) : CHANGE_FADE_MS
+
+  // what may come next, loaded ahead (kept referenced, so the browser keeps them)
+  const preloaded = useRef(new Map())
+  const upcoming = [...(slotData.quick || []), ...(slotData.rotation?.items || [])].map((it) => it?.url).filter(Boolean)
+  const upcomingKey = [...new Set(upcoming)].sort().join('\n')
+  useEffect(() => {
+    const keep = new Set(upcoming)
+    for (const url of keep) {
+      if (preloaded.current.has(url)) continue
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = url
+      preloaded.current.set(url, img)
+    }
+    for (const url of [...preloaded.current.keys()]) if (!keep.has(url)) preloaded.current.delete(url)
+  }, [upcomingKey])
 
   // Connect WebSocket on mount
   useEffect(() => {

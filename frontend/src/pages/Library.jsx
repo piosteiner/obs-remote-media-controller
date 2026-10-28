@@ -5,7 +5,6 @@ import Modal from '../components/common/Modal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { useImageHoverPreview, ImageHoverPreview } from '../components/common/ImageHoverPreview'
 import { imagesAPI, slotsAPI } from '../services/api'
-import websocketService from '../services/websocket'
 import useStore from '../store'
 import useToastStore from '../store/toast'
 
@@ -405,7 +404,6 @@ function Library() {
         imageId: selectedImage.id,
         imageUrl: selectedImage.url
       })
-      websocketService.updateSlot(slotNumber, selectedImage.url, selectedImage.id)
       useToastStore.getState().success(`Image assigned to Slot ${slotNumber}`)
       setShowAssignModal(false)
       setSelectedImage(null)

@@ -14,6 +14,10 @@ const useStore = create((set, get) => ({
   // Shared YouTube player state (from the server)
   player: null,
 
+  // The slot the keyboard shortcuts work on (components/control/QuickSlots.jsx): the last one used
+  activeSlot: 1,
+  setActiveSlot: (activeSlot) => set({ activeSlot }),
+
   // Connection status
   isConnected: false,
   

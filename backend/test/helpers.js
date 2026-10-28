@@ -20,8 +20,10 @@ async function startServer() {
   const dataDir = path.join(dir, 'data');
   const uploadsDir = path.join(dir, 'uploads');
   const url = `http://localhost:${port}`;
+  // not as a test itself: the runner's NODE_TEST_CONTEXT would make the server report to it and wait for it
+  const { NODE_TEST_CONTEXT, ...env } = process.env;
   const child = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'server.js')], {
-    env: { ...process.env, PORT: String(port), OBS_DATA_DIR: dataDir, OBS_UPLOADS_DIR: uploadsDir, ADMIN_API_KEY: KEY,
+    env: { ...env, PORT: String(port), OBS_DATA_DIR: dataDir, OBS_UPLOADS_DIR: uploadsDir, ADMIN_API_KEY: KEY,
       API_BASE_URL: url, ALLOWED_ORIGINS: 'http://localhost' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -41,8 +43,14 @@ async function startServer() {
     });
     return raw ? res : { status: res.status, body: await res.json().catch(() => null) };
   };
-  const stop = () => new Promise((resolve) => {
-    child.once('exit', () => { fs.rmSync(dir, { recursive: true, force: true }); resolve(); });
+  // stopped — or already gone (a crash: its log is shown, and the tests fail)
+  const stop = () => new Promise((resolve, reject) => {
+    const done = () => { fs.rmSync(dir, { recursive: true, force: true }); resolve(); };
+    if (child.exitCode !== null || child.signalCode !== null) {
+      fs.rmSync(dir, { recursive: true, force: true });
+      return reject(new Error(`the test server had stopped by itself (exit ${child.exitCode}):\n${log}`));
+    }
+    child.once('exit', done);
     child.kill();
   });
   return { url, port, dataDir, uploadsDir, api, stop, log: () => log };

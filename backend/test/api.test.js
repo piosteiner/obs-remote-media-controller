@@ -107,3 +107,20 @@ test('an uploaded image is stored with a thumbnail, served, listed, and deleted 
   assert.ok(!(await server.api('GET', '/images')).body.data.images.some((i) => i.id === image.id));
   assert.equal(fs.readdirSync(server.uploadsDir).length, 0);
 });
+
+test('a page from before, changing a slot over the socket: saved as the route does, the quick images kept', async () => {
+  await server.api('PUT', '/slots/6', { quick: [img(1)] });
+  const socket = io(server.url, { transports: ['websocket'], auth: { token: KEY } });
+  try {
+    const state = await new Promise((resolve) => socket.on('slots:state', resolve));
+    assert.deepEqual(state.slots['6'].quick[0], img(1)); // on connecting: the slots as saved
+    const heard = new Promise((resolve) => socket.on('slot:updated', (d) => { if (d.slot === '6') resolve(d); }));
+    socket.emit('slot:update', { slot: 6, imageUrl: img(2).url });
+    const update = await heard;
+    assert.equal(update.imageUrl, img(2).url);
+    assert.deepEqual(update.quick[0], img(1));
+    assert.equal(slotFile()['6'].imageUrl, img(2).url);
+  } finally {
+    socket.close();
+  }
+});

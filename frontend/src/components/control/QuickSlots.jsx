@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, RefreshCw, Repeat, Square, Play } from 'lucide-react'
+import { Plus, X, RefreshCw, Repeat, Square, Play, Keyboard } from 'lucide-react'
 import { slotsAPI, imagesAPI } from '../../services/api'
 import useStore from '../../store'
 import useToastStore from '../../store/toast'
@@ -27,9 +27,17 @@ const itemOf = (image) => ({
  * QuickSlots Component
  * Ten prepared images below a slot (2 rows of 5): a click shows one in the slot. "Rotate" chooses several, in
  * the order clicked, to be shown in turn and faded into each other (on the display: pages/Display.jsx).
+ * Keys, for the slot last used (store.activeSlot): 1–9 and 0 show quick image 1–10, Space starts the last
+ * rotation again or stops it — not while typing in a field or with a dialog open.
+ * An image file dropped on a quick slot (or pasted into a chosen one) is uploaded to the library and put there.
  */
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+const typing = (el) => el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))
 function QuickSlots({ slotId, slotData, current }) {
   const setSlot = useStore(state => state.setSlot)
+  const active = useStore(state => state.activeSlot) === slotId
+  const setActiveSlot = useStore(state => state.setActiveSlot)
+  const [uploadingCell, setUploadingCell] = useState(null)
   const quick = Array.from({ length: QUICK_SLOTS }, (_, i) => slotData.quick?.[i] || null)
   const rotation = slotData.rotation
   const rotating = !!rotation?.active
@@ -99,14 +107,57 @@ function QuickSlots({ slotId, slotData, current }) {
   }
   const stopRotation = () => save({ rotation: { ...rotation, active: false } })
 
+  // Space: the rotation set up last starts again (its images and seconds), or the running one stops
+  const toggleRotation = () => {
+    if (rotating) return stopRotation()
+    if ((rotation?.items?.length || 0) < 2) return useToastStore.getState().info('Choose images with “Rotate…” first')
+    save({ rotation: { active: true, items: rotation.items, intervalSec: rotation.intervalSec } })
+  }
+
+  useEffect(() => {
+    if (!active) return undefined
+    const onKey = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || choosing || pickFor !== null) return
+      if (document.querySelector('[role="dialog"]')) return
+      const i = KEYS.indexOf(e.key)
+      if (i >= 0 && quick[i]) { e.preventDefault(); show(quick[i]) }
+      if (e.key === ' ') { e.preventDefault(); toggleRotation() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  // an image file onto quick slot i: uploaded to the library, then put there
+  const uploadInto = async (i, file) => {
+    if (!file?.type?.startsWith('image/')) return useToastStore.getState().warning('That is not an image file')
+    setUploadingCell(i)
+    try {
+      const result = await imagesAPI.upload(file)
+      if (result?.success) await setCell(i, itemOf(result.data))
+    } catch (error) {
+      console.error('Failed to upload image:', error)
+      useToastStore.getState().error('Failed to upload the image')
+    } finally {
+      setUploadingCell(null)
+    }
+  }
+  const imageFileOf = (list) => [...(list || [])].map((it) => (it.getAsFile ? (it.kind === 'file' ? it.getAsFile() : null) : it)).find((f) => f?.type?.startsWith('image/'))
+
   const isCurrent = (q) => q && current && q.url === current
   const inRotation = (q) => rotating && q && rotation.items.some((it) => it.url === q.url)
   const hasCurrentImage = !!slotData.imageUrl && !quick.some((q) => q?.url === slotData.imageUrl)
 
   return (
-    <div className="mt-4" data-testid={`quick-slots-${slotId}`}>
+    <div className="mt-4" data-testid={`quick-slots-${slotId}`} onPointerDown={() => setActiveSlot(slotId)} onFocusCapture={() => setActiveSlot(slotId)}>
       <div className="flex items-center justify-between mb-2 gap-2">
-        <h4 className="text-sm font-medium text-gray-700">Quick images</h4>
+        <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          Quick images
+          {active && (
+            <span className="flex items-center gap-1 text-[11px] font-normal text-gray-400" data-testid="keys-hint" title="Keyboard: 1–9 and 0 show quick image 1–10, Space starts or stops the rotation">
+              <Keyboard className="w-3.5 h-3.5" /> keys 1–0 · Space
+            </span>
+          )}
+        </h4>
         <div className="flex gap-2">
           {!choosing && hasCurrentImage && (
             <button
@@ -169,6 +220,9 @@ function QuickSlots({ slotId, slotData, current }) {
             <div
               key={i}
               data-cell={i}
+              onDragOver={(e) => { if (!choosing && [...(e.dataTransfer?.types || [])].includes('Files')) e.preventDefault() }}
+              onDrop={(e) => { const f = imageFileOf(e.dataTransfer?.files); if (f && !choosing) { e.preventDefault(); uploadInto(i, f) } }}
+              onPaste={(e) => { const f = imageFileOf(e.clipboardData?.items); if (f && !choosing) { e.preventDefault(); uploadInto(i, f) } }}
               className={`group relative aspect-video rounded-md overflow-hidden border-2 ${
                 choosing && order >= 0 ? 'border-primary-500'
                   : isCurrent(q) ? 'border-green-500'
@@ -203,6 +257,15 @@ function QuickSlots({ slotId, slotData, current }) {
                 </button>
               )}
 
+              {uploadingCell === i && (
+                <span className="absolute inset-0 flex items-center justify-center bg-white/70" data-testid="cell-uploading">
+                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600" />
+                </span>
+              )}
+              {/* its key (for the slot whose keys are on) */}
+              {active && q && !choosing && (
+                <span className="absolute top-1 right-1 px-1 rounded bg-black/50 text-white text-[10px] font-mono group-hover:opacity-0 transition-opacity" aria-hidden="true">{KEYS[i]}</span>
+              )}
               {choosing && order >= 0 && (
                 <span className="absolute top-1 left-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-primary-600 text-white text-xs font-semibold flex items-center justify-center">
                   {order + 1}

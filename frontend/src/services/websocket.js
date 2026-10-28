@@ -112,37 +112,8 @@ class WebSocketService {
     })
   }
 
-  // Send events
-  updateSlot(slotId, imageUrl, imageId = null) {
-    if (!this.socket?.connected) {
-      console.error('WebSocket not connected')
-      return
-    }
-
-    this.socket.emit('slot:update', {
-      slot: slotId,
-      imageUrl,
-      imageId
-    })
-  }
-
-  loadScene(sceneId) {
-    if (!this.socket?.connected) {
-      console.error('WebSocket not connected')
-      return
-    }
-
-    this.socket.emit('scene:load', { sceneId })
-  }
-
-  clearSlot(slotId) {
-    if (!this.socket?.connected) {
-      console.error('WebSocket not connected')
-      return
-    }
-
-    this.socket.emit('slot:clear', { slot: slotId })
-  }
+  // Changes go through the API (services/api.js), which tells every page over this socket — nothing is sent here
+  // but keep-alive and the clock
 
   // Estimate the offset to the server clock from a few round trips, keeping
   // the fastest one (least affected by network delay)

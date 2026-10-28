@@ -1,22 +1,17 @@
 const storage = require('./storage');
+const { applySlotUpdate, clearSlot } = require('./slotState');
 
-// In-memory slot state (or load from database)
-const slots = {};
-
+// The socket: live updates to every page (displays and controllers). The slots' state is the saved one
+// (services/storage.js) — changes come through the routes (routes/slots.js, routes/scenes.js), which tell
+// everyone with 'slot:updated' / 'scene:loaded'. The two slot commands here are kept for pages from before
+// (they sent every change over the socket as well); they change the saved slot as the route does.
 module.exports = (io) => {
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     console.log('✅ Client connected:', socket.id);
 
-    // Send current slot states on connect
     socket.emit('connection:status', {
       status: 'connected',
       clientId: socket.id,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Send current slots state
-    socket.emit('slots:state', {
-      slots: slots,
       timestamp: new Date().toISOString(),
     });
 
@@ -25,94 +20,17 @@ module.exports = (io) => {
       socket.emit('error', { message: 'Unauthorized: admin key required' });
       return true;
     };
+    const broadcast = (slot, data) => io.emit('slot:updated', { slot: String(slot), ...data, timestamp: data.updatedAt || new Date().toISOString() });
 
-    // Handle slot update
-    socket.on('slot:update', (data) => {
+    socket.on('slot:update', async ({ slot, imageUrl, imageId } = {}) => {
       if (denyUnlessWriter()) return;
-      const { slot, imageUrl, imageId } = data;
-      
-      // Update state
-      slots[slot] = {
-        imageId: imageId || null,
-        imageUrl: imageUrl || null,
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Broadcast to all clients
-      io.emit('slot:updated', {
-        slot,
-        imageId: imageId || null,
-        imageUrl: imageUrl || null,
-        timestamp: new Date().toISOString(),
-      });
-
-      console.log(`📺 Slot ${slot} updated:`, imageUrl);
+      const data = await storage.updateSlot(String(slot), (current) => applySlotUpdate(current, { imageUrl, imageId }));
+      broadcast(slot, data);
     });
 
-    // Handle scene load
-    socket.on('scene:load', async (data) => {
+    socket.on('slot:clear', async ({ slot } = {}) => {
       if (denyUnlessWriter()) return;
-      const { sceneId } = data;
-      
-      try {
-        // Load scene from persistent storage
-        const scenes = await storage.getScenes();
-        const scene = scenes.find(s => s.id === parseInt(sceneId));
-        
-        if (!scene) {
-          socket.emit('error', {
-            message: 'Scene not found',
-            sceneId
-          });
-          console.error(`❌ Scene ${sceneId} not found`);
-          return;
-        }
-
-        // Update global slots (merge with existing)
-        global.slots = global.slots || {};
-        Object.entries(scene.slots).forEach(([slotId, slotData]) => {
-          if (slotData && (slotData.imageId || slotData.imageUrl)) {
-            global.slots[slotId] = slotData;
-          }
-        });
-
-        // Broadcast to all clients
-        io.emit('scene:loaded', {
-          sceneId: scene.id,
-          sceneName: scene.name,
-          slots: scene.slots,
-          allSlots: global.slots
-        });
-
-        console.log(`🎬 Scene ${sceneId} loaded: ${scene.name}`);
-      } catch (error) {
-        console.error('Error loading scene:', error);
-        socket.emit('error', {
-          message: 'Failed to load scene',
-          error: error.message
-        });
-      }
-    });
-
-    // Handle slot clear
-    socket.on('slot:clear', (data) => {
-      if (denyUnlessWriter()) return;
-      const { slot } = data;
-      
-      slots[slot] = {
-        imageId: null,
-        imageUrl: null,
-        updatedAt: null,
-      };
-
-      io.emit('slot:updated', {
-        slot,
-        imageId: null,
-        imageUrl: null,
-        timestamp: new Date().toISOString(),
-      });
-
-      console.log(`🗑️  Slot ${slot} cleared`);
+      broadcast(slot, await storage.updateSlot(String(slot), clearSlot));
     });
 
     // Keep-alive
@@ -123,8 +41,11 @@ module.exports = (io) => {
     socket.on('disconnect', () => {
       console.log('❌ Client disconnected:', socket.id);
     });
-  });
 
-  // Export slots state for API routes
-  global.slots = slots;
+    // the slots as saved — after the handlers above are there (awaiting first would lose a command sent at once)
+    socket.emit('slots:state', {
+      slots: await storage.getSlots(),
+      timestamp: new Date().toISOString(),
+    });
+  });
 };

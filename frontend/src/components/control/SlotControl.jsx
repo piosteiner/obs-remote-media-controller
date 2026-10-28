@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link as LinkIcon, Upload, X, Image as ImageIcon, Clipboard, Library, Save } from 'lucide-react'
 import { slotsAPI, imagesAPI } from '../../services/api'
-import websocketService from '../../services/websocket'
 import useStore from '../../store'
 import useToastStore from '../../store/toast'
 import LibraryPicker from '../common/LibraryPicker'
@@ -78,7 +77,6 @@ function SlotControl({ slotId, slotData }) {
     try {
       // Update slot with URL
       await slotsAPI.update(slotId, { imageUrl: urlInput })
-      websocketService.updateSlot(slotId, urlInput)
       
       setUrlInput('')
       setShowUrlInput(false)
@@ -163,7 +161,6 @@ function SlotControl({ slotId, slotData }) {
           imageId: uploadedImage.id,
           imageUrl: imageUrl 
         })
-        websocketService.updateSlot(slotId, imageUrl, uploadedImage.id)
         useToastStore.getState().success(`Image uploaded to Slot ${slotId}`)
       }
     } catch (error) {
@@ -181,7 +178,6 @@ function SlotControl({ slotId, slotData }) {
   const handleClear = async () => {
     try {
       await slotsAPI.clear(slotId)
-      websocketService.clearSlot(slotId)
       clearSlot(slotId)
     } catch (error) {
       console.error('Failed to clear slot:', error)
@@ -196,7 +192,6 @@ function SlotControl({ slotId, slotData }) {
         imageId: image.id,
         imageUrl: image.url 
       })
-      websocketService.updateSlot(slotId, image.url, image.id)
       useToastStore.getState().success(`Selected "${image.name}" for Slot ${slotId}`)
     } catch (error) {
       console.error('Failed to update slot:', error)
