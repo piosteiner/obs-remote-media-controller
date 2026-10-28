@@ -12,6 +12,7 @@ test('a quick slot is filled from the library, and a click shows it in the slot'
   await page.getByRole('button', { name: /Fixture 2/ }).click()
   await page.getByRole('button', { name: 'Select Image' }).click()
   await expect(cell(page, 1, 3).locator('img')).toHaveAttribute('src', fixture(2).url)
+  await expect(cell(page, 1, 3).getByTestId('quick-name')).toHaveText('Fixture 2') // its name, as in the picker
   expect((await slotOf(request, 1)).quick[3]).toMatchObject({ url: fixture(2).url, imageId: 1001, name: 'Fixture 2' })
 
   await cell(page, 1, 3).getByTitle(/^Show/).click()
@@ -24,6 +25,7 @@ test('"+ Current" puts the shown image into the first free quick slot; emptying 
   await page.goto('/control')
   await quickGrid(page, 2).getByRole('button', { name: /Current/ }).click()
   await expect(cell(page, 2, 1).locator('img')).toHaveAttribute('src', fixture(4).url)
+  await expect(cell(page, 2, 1).getByTestId('quick-name')).toHaveText('Fixture 4') // the name from the library
   await cell(page, 2, 0).hover()
   await cell(page, 2, 0).getByTitle('Empty this quick slot').click()
   await expect(cell(page, 2, 0).locator('img')).toHaveCount(0)

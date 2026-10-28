@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, X, RefreshCw, Repeat, Square, Play } from 'lucide-react'
-import { slotsAPI } from '../../services/api'
+import { slotsAPI, imagesAPI } from '../../services/api'
 import useStore from '../../store'
 import useToastStore from '../../store/toast'
 import LibraryPicker from '../common/LibraryPicker'
@@ -49,10 +49,17 @@ function QuickSlots({ slotId, slotData, current }) {
 
   const setCell = (i, item) => save({ quick: quick.map((q, j) => (j === i ? item : q)) })
   const show = (item) => save({ imageUrl: item.url, imageId: item.imageId })
-  const addCurrent = () => {
+  // the image shown now, with its name and thumbnail from this library when it is in it
+  const addCurrent = async () => {
     const free = quick.findIndex((q) => !q)
     if (free === -1) return useToastStore.getState().warning('All quick slots are taken')
-    setCell(free, { url: slotData.imageUrl, imageId: slotData.imageId ?? null, thumbnailUrl: null, name: null })
+    let known = null
+    try {
+      const images = (await imagesAPI.getAll())?.data?.images || []
+      known = images.find((im) => (slotData.imageId && im.id === slotData.imageId) || im.url === slotData.imageUrl)
+    } catch { /* without a name then */ }
+    setCell(free, known ? { ...itemOf(known), url: slotData.imageUrl }
+      : { url: slotData.imageUrl, imageId: slotData.imageId ?? null, thumbnailUrl: null, name: null })
   }
 
   const toggleChosen = (i) => setChosen((list) => (list.includes(i) ? list.filter((x) => x !== i) : [...list, i]))
@@ -138,6 +145,12 @@ function QuickSlots({ slotId, slotData, current }) {
                   title={choosing ? 'Choose for the rotation' : `Show${q.name ? ` “${q.name}”` : ''} in Slot ${slotId}`}
                 >
                   <img src={q.thumbnailUrl || q.url} alt={q.name || `Quick image ${i + 1}`} loading="lazy" className="w-full h-full object-cover object-top" />
+                  {/* its name, as in the library picker */}
+                  {q.name && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 pb-1 pt-3 text-left">
+                      <span className="block text-white text-[11px] font-medium truncate" data-testid="quick-name">{q.name}</span>
+                    </span>
+                  )}
                 </button>
               ) : (
                 <button
@@ -157,7 +170,7 @@ function QuickSlots({ slotId, slotData, current }) {
                 </span>
               )}
               {isCurrent(q) && !choosing && (
-                <span className="absolute bottom-1 left-1 px-1.5 rounded bg-green-600 text-white text-[10px] font-semibold">on</span>
+                <span className="absolute top-1 left-1 px-1.5 rounded bg-green-600 text-white text-[10px] font-semibold">on</span>
               )}
               {q && !choosing && (
                 <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
