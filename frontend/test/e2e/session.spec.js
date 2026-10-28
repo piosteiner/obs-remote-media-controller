@@ -41,6 +41,7 @@ test('an image file dropped onto a quick slot is uploaded to the library and put
   await loggedIn(page)
   await setSlot(request, 3, { quick: [], imageUrl: null, rotation: null })
   await page.goto('/control')
+  await expect(cell(page, 3, 4)).toBeVisible() // the grid is there
   await page.evaluate(async () => {
     const blob = await (await fetch('http://localhost:3113/uploads/fixture-6.png')).blob()
     const data = new DataTransfer()

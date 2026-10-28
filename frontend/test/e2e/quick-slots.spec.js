@@ -53,6 +53,8 @@ test('a rotation: chosen in order, shown in turn on the display with a fade, the
   await page.getByLabel('Seconds per image').fill('2')
   await quickGrid(page, 1).getByRole('button', { name: /Rotate 2 images/ }).click()
 
+  // saved (the click's request may still be on its way)
+  await expect.poll(async () => (await slotOf(request, 1)).rotation?.active).toBe(true)
   const rotation = (await slotOf(request, 1)).rotation
   expect(rotation).toMatchObject({ active: true, intervalSec: 2, items: [{ url: fixture(3).url }, { url: fixture(1).url }] })
   await expect(page.getByText(/Rotating \d\/2 · every 2 s/)).toBeVisible()
