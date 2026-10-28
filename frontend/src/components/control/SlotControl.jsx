@@ -5,6 +5,8 @@ import websocketService from '../../services/websocket'
 import useStore from '../../store'
 import useToastStore from '../../store/toast'
 import LibraryPicker from '../common/LibraryPicker'
+import QuickSlots from './QuickSlots'
+import useRotation from '../../hooks/useRotation'
 
 function SlotControl({ slotId, slotData }) {
   const clearSlot = useStore(state => state.clearSlot)
@@ -19,7 +21,9 @@ function SlotControl({ slotId, slotData }) {
   const fileInputRef = useRef(null)
   const pasteAreaRef = useRef(null)
 
-  const { imageUrl, updatedAt } = slotData
+  const { updatedAt } = slotData
+  // what the display shows now: in a rotation, the image that is on
+  const { url: imageUrl, index: rotationAt, rotating } = useRotation(slotData)
 
   // Check if clipboard API is supported
   useEffect(() => {
@@ -256,7 +260,13 @@ function SlotControl({ slotId, slotData }) {
       <div className="mb-4">
         {imageUrl ? (
           <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
+            {rotating && (
+              <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-primary-600 text-white text-xs font-medium">
+                Rotating {rotationAt + 1}/{slotData.rotation.items.length} · every {slotData.rotation.intervalSec} s
+              </span>
+            )}
             <img
+              key={imageUrl}
               src={imageUrl}
               alt={`Slot ${slotId}`}
               className="w-full h-full object-contain"
@@ -278,6 +288,8 @@ function SlotControl({ slotId, slotData }) {
             Updated: {new Date(updatedAt).toLocaleString()}
           </p>
         )}
+
+        <QuickSlots slotId={slotId} slotData={slotData} current={imageUrl} />
       </div>
 
       {/* Actions */}

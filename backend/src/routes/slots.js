@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const storage = require('../services/storage');
+const { applySlotUpdate, clearSlot } = require('../services/slotState');
 
 // Get all slots
 router.get('/', async (req, res) => {
@@ -30,66 +31,29 @@ router.get('/:slotId', async (req, res) => {
   });
 });
 
-// Update slot
+// Update slot: only what the body names changes — the image ({ imageUrl, imageId }), the quick images
+// ({ quick }), the rotation ({ rotation }); see services/slotState.js. Everyone gets the whole slot.
 router.put('/:slotId', async (req, res) => {
   const { slotId } = req.params;
-  const { imageId, imageUrl } = req.body;
+  let slot;
+  try {
+    slot = await storage.updateSlot(slotId, (current) => applySlotUpdate(current, req.body || {}));
+  } catch (err) {
+    if (err.status === 400) return res.status(400).json({ success: false, error: err.message });
+    throw err;
+  }
 
-  const slotData = {
-    imageId: imageId || null,
-    imageUrl: imageUrl || null,
-    updatedAt: new Date().toISOString()
-  };
-
-  await storage.setSlot(slotId, slotData);
-
-  // Broadcast via WebSocket
-  const io = req.app.get('io');
-  io.emit('slot:updated', {
-    slot: slotId,
-    ...slotData,
-    timestamp: slotData.updatedAt
-  });
-
-  res.json({
-    success: true,
-    data: {
-      slot: slotId,
-      ...slotData
-    }
-  });
+  req.app.get('io').emit('slot:updated', { slot: slotId, ...slot, timestamp: slot.updatedAt });
+  res.json({ success: true, data: { slot: slotId, ...slot } });
 });
 
-// Clear slot
+// Clear slot: no image, no rotation; the quick images stay
 router.delete('/:slotId', async (req, res) => {
   const { slotId } = req.params;
+  const slot = await storage.updateSlot(slotId, clearSlot);
 
-  const clearedData = {
-    imageId: null,
-    imageUrl: null,
-    updatedAt: null
-  };
-
-  await storage.setSlot(slotId, clearedData);
-
-  // Broadcast via WebSocket
-  const io = req.app.get('io');
-  io.emit('slot:updated', {
-    slot: slotId,
-    imageId: null,
-    imageUrl: null,
-    timestamp: new Date().toISOString()
-  });
-
-  res.json({
-    success: true,
-    message: 'Slot cleared',
-    data: {
-      slot: slotId,
-      imageId: null,
-      imageUrl: null
-    }
-  });
+  req.app.get('io').emit('slot:updated', { slot: slotId, ...slot, timestamp: new Date().toISOString() });
+  res.json({ success: true, message: 'Slot cleared', data: { slot: slotId, ...slot } });
 });
 
 module.exports = router;

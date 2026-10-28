@@ -32,10 +32,11 @@ const useStore = create((set, get) => ({
 
   setPlayer: (player) => set({ player }),
   
+  // no image, no rotation — the prepared quick images stay (as on the server)
   clearSlot: (slotId) => set((state) => ({
     slots: {
       ...state.slots,
-      [slotId]: { imageId: null, imageUrl: null, updatedAt: null }
+      [slotId]: { ...state.slots[slotId], imageId: null, imageUrl: null, rotation: null, updatedAt: null }
     }
   })),
   

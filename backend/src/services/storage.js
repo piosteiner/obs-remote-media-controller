@@ -3,7 +3,8 @@ const path = require('path');
 
 class Storage {
   constructor() {
-    this.dataDir = path.join(__dirname, '../../data');
+    // OBS_DATA_DIR: another folder (a test server on a copy); else backend/data
+    this.dataDir = process.env.OBS_DATA_DIR || path.join(__dirname, '../../data');
     this.slotsFile = path.join(this.dataDir, 'slots.json');
     this.scenesFile = path.join(this.dataDir, 'scenes.json');
     this.imagesFile = path.join(this.dataDir, 'images.json');
@@ -83,6 +84,14 @@ class Storage {
     return this.update(this.slotsFile, {}, (current) => {
       Object.keys(current).forEach(key => delete current[key]);
       Object.assign(current, slots);
+    });
+  }
+
+  // Change one slot from what it is now: fn(current) → the slot's new value (exclusive, as every write here)
+  updateSlot(slotId, fn) {
+    return this.update(this.slotsFile, {}, (slots) => {
+      slots[slotId] = fn(slots[slotId] || {});
+      return slots[slotId];
     });
   }
 

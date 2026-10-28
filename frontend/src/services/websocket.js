@@ -69,13 +69,13 @@ class WebSocketService {
     })
 
     // Slot events
+    // The server sends the whole slot (image, quick images, rotation); an older client's partial update
+    // (image only) must not wipe the rest — merged into what the slot has
     this.socket.on('slot:updated', (data) => {
       console.log('Slot updated:', data)
-      useStore.getState().setSlot(data.slot, {
-        imageId: data.imageId,
-        imageUrl: data.imageUrl,
-        updatedAt: data.timestamp
-      })
+      const { slot, timestamp, ...fields } = data
+      const previous = useStore.getState().slots[slot] || {}
+      useStore.getState().setSlot(slot, { ...previous, ...fields, updatedAt: timestamp ?? previous.updatedAt })
     })
 
     // Scene events
