@@ -12,11 +12,17 @@ import useRotation from '../hooks/useRotation'
  * Features:
  * - Transparent background
  * - Real-time image updates via WebSocket
- * - Cross-fades: a new image fades in over the old one (two layers), for a change and in a rotation
+ * - Calm changes (players shouldn't notice a switch): the new image dissolves in over the old one, which stays
+ *   fully there underneath — no dip to the background halfway; only then is the old one faded away (it shows
+ *   only where the new image is transparent). The first image fades in, a cleared slot fades out.
  * - Rotation: the slot's images in turn (hooks/useRotation.js — the same image as on every controller)
  * - Automatic reconnection
  */
-const FADE_MS = 600
+export const CHANGE_FADE_MS = 2000
+// in a rotation up to 2.5 s, but never more than a third of the time an image stays
+export const rotationFadeMs = (intervalSec) => Math.min(2500, (intervalSec * 1000) / 3)
+
+const EMPTY = { url: null, opacity: 0, ms: 0 }
 
 function Display() {
   const [searchParams] = useSearchParams()
@@ -29,13 +35,17 @@ function Display() {
 
   const slotData = slots[slotId] || {}
   const { url: targetUrl, rotating } = useRotation(slotData)
-  // in a rotation the fade takes up to 1.5 s, but never more than a third of the time an image stays
-  const fadeMs = rotating ? Math.min(1500, (slotData.rotation.intervalSec * 1000) / 3) : FADE_MS
+  const fadeMs = rotating ? rotationFadeMs(slotData.rotation.intervalSec) : CHANGE_FADE_MS
 
-  // two layers: the one in front shows the current image; a new one is loaded into the other, then faded in
-  const [view, setView] = useState({ layers: [{ url: null, on: false }, { url: null, on: false }], front: 0 })
-  const viewRef = useRef(view)
-  viewRef.current = view
+  // Two layers, both always there (a layer that appears would show at once, without a fade). top: the layer that
+  // shows, or is fading in, the newest image; the other lies under it.
+  const [layers, setLayers] = useState([EMPTY, EMPTY])
+  const [top, setTop] = useState(0)
+  const state = useRef({ layers, top })
+  state.current = { layers, top }
+  const timers = useRef([])
+  const later = (fn, ms) => timers.current.push(setTimeout(fn, ms))
+  const cancelTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
 
   // Connect WebSocket on mount
   useEffect(() => {
@@ -63,26 +73,40 @@ function Display() {
 
     return () => {
       clearInterval(pingInterval)
+      cancelTimers()
       // Don't disconnect here - other components might be using it
     }
   }, [slotId])
 
-  // A new image: loaded first (no half-drawn picture), then faded in over the old one
   useEffect(() => {
-    const { layers, front } = viewRef.current
+    const { layers: now, top: shown } = state.current
+    const set = (i, layer) => setLayers((ls) => ls.map((l, j) => (j === i ? { ...l, ...layer } : l)))
+
+    // cleared: what shows fades out
     if (!targetUrl) {
-      setView({ layers: layers.map((l) => ({ ...l, on: false })), front })
+      cancelTimers()
+      setLayers((ls) => ls.map((l) => ({ ...l, opacity: 0, ms: fadeMs })))
       return undefined
     }
-    if (layers[front].url === targetUrl && layers[front].on) return undefined
+    if (now[shown].url === targetUrl && now[shown].opacity > 0) return undefined
+
+    // loaded first (no half-drawn picture), then dissolved in on top of what shows now
     let cancelled = false
     const img = new Image()
     img.onload = img.onerror = () => {
       if (cancelled) return
-      const back = 1 - viewRef.current.front
-      setView((v) => ({
-        layers: v.layers.map((l, i) => (i === back ? { url: targetUrl, on: true } : { ...l, on: false })),
-        front: back,
+      cancelTimers()
+      const under = state.current.top // the image showing now stays, fully, underneath …
+      const incoming = 1 - under
+      set(under, { opacity: state.current.layers[under].url ? 1 : 0, ms: 300 })
+      set(incoming, { url: targetUrl, opacity: 0, ms: 0 }) // … the new one starts invisible, on top …
+      setTop(incoming)
+      // … and dissolves in (two frames later, so the browser has drawn it at 0 and the transition runs)
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (cancelled) return
+        set(incoming, { opacity: 1, ms: fadeMs })
+        // then the old one goes, under it — seen only where the new image is transparent
+        later(() => set(under, { opacity: 0, ms: fadeMs / 2 }), fadeMs)
       }))
     }
     img.src = targetUrl
@@ -91,20 +115,21 @@ function Display() {
 
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-transparent">
-      {view.layers.map((layer, i) => layer.url && (
+      {layers.map((layer, i) => (
         <img
           key={i}
-          src={layer.url}
-          alt={`Slot ${slotId}`}
-          data-layer={i === view.front ? 'front' : 'back'}
+          src={layer.url || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}
+          alt=""
+          data-layer={i === top ? 'front' : 'back'}
+          data-url={layer.url || ''}
           className="absolute inset-0 w-full h-full object-contain"
           style={{
-            opacity: layer.on ? 1 : 0,
-            transition: `opacity ${fadeMs}ms ease-in-out`,
-            zIndex: i === view.front ? 2 : 1,
+            opacity: layer.url ? layer.opacity : 0,
+            transition: `opacity ${layer.ms}ms ease-in-out`,
+            zIndex: i === top ? 2 : 1,
             imageRendering: 'crisp-edges',
           }}
-          onError={() => console.error('Image failed to load:', layer.url)}
+          onError={() => layer.url && console.error('Image failed to load:', layer.url)}
         />
       ))}
 
