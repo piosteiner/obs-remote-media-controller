@@ -3,12 +3,21 @@ import { Search, X, CheckCircle2 } from 'lucide-react'
 import { imagesAPI } from '../../services/api'
 import Modal from '../common/Modal'
 import { useImageHoverPreview, ImageHoverPreview } from './ImageHoverPreview'
+import AdenaiBrowser from './AdenaiBrowser'
+
+const SOURCE_KEY = 'obs-library-picker-source'
+const savedSource = () => { try { return localStorage.getItem(SOURCE_KEY) || 'library' } catch { return 'library' } }
+// an image's key in either source: this library's id, or the Adenai media id
+const keyOf = (img) => img?.adenaiId || img?.id
 
 /**
  * LibraryPicker Component
- * Modal for selecting an image from the library
+ * Modal for selecting an image: from this library, or from the Adenai map's media (AdenaiBrowser) — an Adenai image
+ * is passed on without an id (it is not in this library), with its address, as an image from a URL is
  */
 function LibraryPicker({ isOpen, onClose, onSelect }) {
+  const [source, setSource] = useState(savedSource)
+  const chooseSource = (s) => { setSource(s); setSelectedImage(null); try { localStorage.setItem(SOURCE_KEY, s) } catch { /* private mode */ } }
   const [images, setImages] = useState([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -45,7 +54,9 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
 
   const handleSelect = () => {
     if (selectedImage) {
-      onSelect(selectedImage)
+      onSelect(selectedImage.adenaiId
+        ? { url: selectedImage.url, thumbnailUrl: selectedImage.thumbnailUrl, originalName: selectedImage.originalName }
+        : selectedImage)
       onClose()
       setSelectedImage(null)
       setSearchTerm('')
@@ -67,6 +78,27 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
         maxWidth="max-w-4xl"
       >
         <div className="space-y-4">
+          {/* Source: this library or the Adenai map's */}
+          <div className="flex gap-1 border-b border-gray-200" role="tablist">
+            {[['library', 'OBS library'], ['adenai', 'Adenai']].map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={source === id}
+                onClick={() => chooseSource(id)}
+                className={`px-4 py-2 -mb-px border-b-2 text-sm font-medium transition-colors ${
+                  source === id ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {source === 'adenai' ? (
+            <AdenaiBrowser selectedKey={keyOf(selectedImage)} onPick={setSelectedImage} bindPreview={bindPreview} />
+          ) : (<>
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -130,6 +162,8 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
               </div>
             )}
           </div>
+
+          </>)}
 
           {/* Selected Image Info */}
           {selectedImage && (
