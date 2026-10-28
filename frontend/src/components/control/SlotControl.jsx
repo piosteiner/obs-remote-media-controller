@@ -232,7 +232,7 @@ function SlotControl({ slotId, slotData }) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6" data-testid={`slot-${slotId}`}>
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Slot {slotId}</h3>
         {imageUrl && (

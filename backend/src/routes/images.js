@@ -8,7 +8,8 @@ const sharp = require('sharp');
 const dataStorage = require('../services/storage');
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../../uploads');
+// OBS_UPLOADS_DIR: another folder (a test server); else backend/uploads
+const uploadsDir = process.env.OBS_UPLOADS_DIR || path.join(__dirname, '../../uploads');
 fs.mkdir(uploadsDir, { recursive: true }).catch(console.error);
 
 // Multer configuration for temporary storage

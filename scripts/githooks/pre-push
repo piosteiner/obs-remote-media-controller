@@ -1,0 +1,10 @@
+#!/bin/bash
+# Before a push: the backend's tests (unit and API, against a server of their own) and the browser tests
+# (frontend, against a test server and a test build). Enabled once per checkout:
+#   git config core.hooksPath scripts/githooks        In an emergency: git push --no-verify
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+echo "▶ backend tests"
+(cd "$ROOT/backend" && npm test --silent >/dev/null 2>&1) || { echo "✗ backend tests failed — npm test (in backend/)"; exit 1; }
+echo "▶ browser tests"
+(cd "$ROOT/frontend" && npx playwright test --reporter=line) || { echo "✗ browser tests failed — npm run test:e2e (in frontend/)"; exit 1; }

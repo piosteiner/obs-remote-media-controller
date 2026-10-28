@@ -17,6 +17,9 @@ pnpm-debug.log*
 
 # Build outputs
 dist/
+# browser tests: the test build and their output
+frontend/dist-e2e/
+frontend/test/e2e/.results/
 build/
 out/
 

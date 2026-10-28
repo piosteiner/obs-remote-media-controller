@@ -14,7 +14,7 @@ app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 // Serve uploaded images
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(process.env.OBS_UPLOADS_DIR || path.join(__dirname, '../uploads')));
 
 // Socket.io setup
 const io = new Server(httpServer, {

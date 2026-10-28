@@ -48,6 +48,9 @@ function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) {
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={typeof title === 'string' ? title : undefined}
           className={`relative bg-white rounded-xl shadow-2xl ${maxWidth} w-full transform transition-all`}
           onClick={(e) => e.stopPropagation()}
         >

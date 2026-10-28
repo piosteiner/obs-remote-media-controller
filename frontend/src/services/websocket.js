@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client'
 import useStore from '../store'
 import { getApiKey } from './auth'
+import { slotsAPI } from './api'
 
 class WebSocketService {
   constructor() {
@@ -33,8 +34,9 @@ class WebSocketService {
     if (import.meta.env.PROD && backendURL) {
       // Extract base URL and path
       // e.g., "wss://api.piogino.ch/obs" -> url: "wss://api.piogino.ch", path: "/obs/socket.io/"
-      const urlObj = new URL(backendURL.replace('wss://', 'https://'))
-      url = `wss://${urlObj.host}`
+      // ws:// stays ws:// (a local test server), everything else is wss://
+      const urlObj = new URL(backendURL.replace(/^ws(s?):\/\//, 'http$1://'))
+      url = `${urlObj.protocol === 'http:' ? 'ws' : 'wss'}://${urlObj.host}`
       
       if (urlObj.pathname && urlObj.pathname !== '/') {
         socketOptions.path = urlObj.pathname + '/socket.io/'
@@ -52,6 +54,8 @@ class WebSocketService {
       useStore.getState().setConnected(true)
       this.reconnectAttempts = 0
       this.syncClock()
+      // what changed while not connected (between the page's first load and the socket, or during a drop)
+      slotsAPI.getAll().then((r) => { if (r?.success) useStore.getState().setSlots(r.data.slots) }).catch(() => {})
     })
 
     this.socket.on('disconnect', (reason) => {
