@@ -1,12 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, X, RefreshCw, Repeat, Square, Play } from 'lucide-react'
 import { slotsAPI, imagesAPI } from '../../services/api'
 import useStore from '../../store'
 import useToastStore from '../../store/toast'
 import LibraryPicker from '../common/LibraryPicker'
+import websocketService from '../../services/websocket'
+import { rotationIndex } from '../../hooks/useRotation'
 
 const QUICK_SLOTS = 10
-const DEFAULT_INTERVAL = 8
+const DEFAULT_INTERVAL = 10
+// the seconds last chosen: the default of the next rotation (this browser)
+const SECONDS_KEY = 'obs-rotation-seconds'
+const savedSeconds = () => { try { return Number(localStorage.getItem(SECONDS_KEY)) || DEFAULT_INTERVAL } catch { return DEFAULT_INTERVAL } }
+const rememberSeconds = (s) => { try { localStorage.setItem(SECONDS_KEY, String(s)) } catch { /* private mode */ } }
+const clampSeconds = (v) => Math.min(3600, Math.max(2, Math.round(Number(v)) || DEFAULT_INTERVAL))
 
 // an image as the quick slots keep it (backend/src/services/slotState.js), from a library or Adenai pick
 const itemOf = (image) => ({
@@ -30,7 +37,10 @@ function QuickSlots({ slotId, slotData, current }) {
   const [pickFor, setPickFor] = useState(null) // the cell the picker fills
   const [choosing, setChoosing] = useState(false) // choosing images for a rotation
   const [chosen, setChosen] = useState([]) // their cells, in the order clicked
-  const [intervalSec, setIntervalSec] = useState(rotation?.intervalSec || DEFAULT_INTERVAL)
+  const [intervalSec, setIntervalSec] = useState(rotation?.intervalSec || savedSeconds)
+  // the running rotation's seconds, as typed (saved when the field is left or Enter pressed)
+  const [liveSec, setLiveSec] = useState(rotation?.intervalSec || '')
+  useEffect(() => { setLiveSec(rotation?.intervalSec || '') }, [rotation?.intervalSec])
 
   // the server answers with the whole slot; it is set here too (the broadcast may come later)
   const save = async (body, done) => {
@@ -67,13 +77,25 @@ function QuickSlots({ slotId, slotData, current }) {
     // a rotation already set up: its images chosen again, to change it
     const again = (rotation?.items || []).map((it) => quick.findIndex((q) => q?.url === it.url)).filter((i) => i >= 0)
     setChosen(again)
-    setIntervalSec(rotation?.intervalSec || DEFAULT_INTERVAL)
+    setIntervalSec(rotation?.intervalSec || savedSeconds())
     setChoosing(true)
   }
   const startRotation = async () => {
-    await save({ rotation: { active: true, items: chosen.map((i) => quick[i]), intervalSec: Number(intervalSec) } },
-      `Slot ${slotId}: ${chosen.length} images in turn, every ${intervalSec} s`)
+    const seconds = clampSeconds(intervalSec)
+    rememberSeconds(seconds)
+    await save({ rotation: { active: true, items: chosen.map((i) => quick[i]), intervalSec: seconds } },
+      `Slot ${slotId}: ${chosen.length} images in turn, every ${seconds} s`)
     setChoosing(false)
+  }
+  // a running rotation's seconds changed: the image on now stays (for the new time), the order goes on from it
+  const changeSeconds = () => {
+    const seconds = clampSeconds(liveSec)
+    setLiveSec(seconds)
+    if (!rotating || seconds === rotation.intervalSec) return
+    rememberSeconds(seconds)
+    const at = rotationIndex(rotation, websocketService.serverNow())
+    const items = [...rotation.items.slice(at), ...rotation.items.slice(0, at)]
+    save({ rotation: { active: true, items, intervalSec: seconds } })
   }
   const stopRotation = () => save({ rotation: { ...rotation, active: false } })
 
@@ -95,6 +117,23 @@ function QuickSlots({ slotId, slotData, current }) {
             >
               <Plus className="w-3.5 h-3.5" /> Current
             </button>
+          )}
+          {rotating && !choosing && (
+            <label className="flex items-center gap-1 text-xs text-gray-600">
+              every
+              <input
+                type="number"
+                min="2"
+                max="3600"
+                value={liveSec}
+                onChange={(e) => setLiveSec(e.target.value)}
+                onBlur={changeSeconds}
+                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                aria-label="Seconds per image"
+                className="w-14 px-1.5 py-0.5 border border-gray-300 rounded-md"
+              />
+              s
+            </label>
           )}
           {rotating && !choosing && (
             <button

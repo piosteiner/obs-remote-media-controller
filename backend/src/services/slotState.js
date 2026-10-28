@@ -8,7 +8,7 @@
 //     rotation: { active, items: [ { url, imageId, thumbnailUrl, name } ], intervalSec, startedAt } | null }
 const QUICK_SLOTS = 10;
 const MAX_ROTATION = 11; // the image shown and the ten quick ones
-const INTERVAL = { min: 2, max: 3600, default: 8 };
+const INTERVAL = { min: 2, max: 3600, default: 10 };
 
 const badRequest = (message) => Object.assign(new Error(message), { status: 400 });
 const text = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null);

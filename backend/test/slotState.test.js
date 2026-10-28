@@ -36,7 +36,7 @@ test('the interval is kept between 2 seconds and an hour', () => {
   const r = (intervalSec) => applySlotUpdate({}, { rotation: { active: true, items: [img(1), img(2)], intervalSec } }, NOW).rotation.intervalSec;
   assert.equal(r(0.5), 2);
   assert.equal(r(99999), 3600);
-  assert.equal(r('abc'), 8);
+  assert.equal(r('abc'), 10);
 });
 
 test('which image is on: the same for every device, from the start and the interval', () => {
