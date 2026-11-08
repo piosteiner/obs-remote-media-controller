@@ -1,13 +1,13 @@
 // What a slot holds and how a change is applied to it (routes/slots.js). Besides the image shown, a slot has
-// quick images — ten prepared ones to switch to — and a rotation: several images shown in turn, faded into each
+// quick images — twenty prepared ones to switch to — and a rotation: several images shown in turn, faded into each
 // other. The display computes which one is on (rotationIndex: from startedAt and the interval, the same on every
 // device), so a reloaded browser source carries on where it was.
 //
 //   { imageId, imageUrl, updatedAt,
 //     quick: [ { url, imageId, thumbnailUrl, name } | null ] (QUICK_SLOTS),
 //     rotation: { active, items: [ { url, imageId, thumbnailUrl, name } ], intervalSec, startedAt } | null }
-const QUICK_SLOTS = 10;
-const MAX_ROTATION = 11; // the image shown and the ten quick ones
+const QUICK_SLOTS = 20;
+const MAX_ROTATION = 21; // the image shown and the twenty quick ones
 const INTERVAL = { min: 2, max: 3600, default: 10 };
 
 const badRequest = (message) => Object.assign(new Error(message), { status: 400 });

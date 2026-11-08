@@ -7,7 +7,7 @@ import LibraryPicker from '../common/LibraryPicker'
 import websocketService from '../../services/websocket'
 import { rotationIndex } from '../../hooks/useRotation'
 
-const QUICK_SLOTS = 10
+const QUICK_SLOTS = 20
 const DEFAULT_INTERVAL = 10
 // the seconds last chosen: the default of the next rotation (this browser)
 const SECONDS_KEY = 'obs-rotation-seconds'
@@ -25,13 +25,22 @@ const itemOf = (image) => ({
 
 /**
  * QuickSlots Component
- * Ten prepared images below a slot (2 rows of 5): a click shows one in the slot. "Rotate" chooses several, in
+ * Twenty prepared images below a slot (4 rows of 5): a click shows one in the slot. "Rotate" chooses several, in
  * the order clicked, to be shown in turn and faded into each other (on the display: pages/Display.jsx).
- * Keys, for the slot last used (store.activeSlot): 1–9 and 0 show quick image 1–10, Space starts the last
- * rotation again or stops it — not while typing in a field or with a dialog open.
+ * Keys, for the slot last used (store.activeSlot): 1–9 and 0 show quick image 1–10, with Shift 11–20 (the
+ * physical digit keys, whatever the layout puts on them), Space starts the last rotation again or stops it —
+ * not while typing in a field or with a dialog open. Ctrl and Alt with a digit are left to the browser (tabs).
  * An image file dropped on a quick slot (or pasted into a chosen one) is uploaded to the library and put there.
  */
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+// the label of quick image i's key: 1–0, then ⇧1–⇧0
+const KEYS = [...DIGITS, ...DIGITS.map((d) => `⇧${d}`)]
+// the quick image a key press is for (-1 for none): the digit's row, shifted for the second ten
+const keyIndex = (e) => {
+  const code = DIGITS.indexOf(e.code?.replace(/^(Digit|Numpad)/, ''))
+  const d = code >= 0 ? code : DIGITS.indexOf(e.key)
+  return d < 0 ? -1 : d + (e.shiftKey ? 10 : 0)
+}
 const typing = (el) => el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))
 function QuickSlots({ slotId, slotData, current }) {
   const setSlot = useStore(state => state.setSlot)
@@ -119,9 +128,9 @@ function QuickSlots({ slotId, slotData, current }) {
     const onKey = (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || choosing || pickFor !== null) return
       if (document.querySelector('[role="dialog"]')) return
-      const i = KEYS.indexOf(e.key)
+      const i = keyIndex(e)
       if (i >= 0 && quick[i]) { e.preventDefault(); show(quick[i]) }
-      if (e.key === ' ') { e.preventDefault(); toggleRotation() }
+      if (e.key === ' ' && !e.shiftKey) { e.preventDefault(); toggleRotation() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -153,8 +162,8 @@ function QuickSlots({ slotId, slotData, current }) {
         <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
           Quick images
           {active && (
-            <span className="flex items-center gap-1 text-[11px] font-normal text-gray-400" data-testid="keys-hint" title="Keyboard: 1–9 and 0 show quick image 1–10, Space starts or stops the rotation">
-              <Keyboard className="w-3.5 h-3.5" /> keys 1–0 · Space
+            <span className="flex items-center gap-1 text-[11px] font-normal text-gray-400" data-testid="keys-hint" title="Keyboard: 1–9 and 0 show quick image 1–10, Shift+1–0 quick image 11–20, Space starts or stops the rotation">
+              <Keyboard className="w-3.5 h-3.5" /> keys 1–0 · ⇧1–0 · Space
             </span>
           )}
         </h4>

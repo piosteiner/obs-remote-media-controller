@@ -15,8 +15,8 @@ test('only what the body names changes: the quick images stay when an image is s
   assert.deepEqual(shown.quick, withQuick.quick);
 });
 
-test('quick images: unusable entries become empty, never more than ten', () => {
-  const s = applySlotUpdate({}, { quick: [{ url: '' }, { nope: 1 }, img(1), ...Array(20).fill(img(2))] }, NOW);
+test('quick images: unusable entries become empty, never more than twenty', () => {
+  const s = applySlotUpdate({}, { quick: [{ url: '' }, { nope: 1 }, img(1), ...Array(30).fill(img(2))] }, NOW);
   assert.equal(s.quick.length, QUICK_SLOTS);
   assert.deepEqual(s.quick.slice(0, 3), [null, null, img(1)]);
   assert.throws(() => applySlotUpdate({}, { quick: 'x' }), /list/);

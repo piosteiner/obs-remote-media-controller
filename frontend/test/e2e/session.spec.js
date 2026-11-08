@@ -3,9 +3,10 @@
 import { test, expect } from '@playwright/test'
 import { loggedIn, slotOf, setSlot, fixture, quickGrid, cell } from './helpers'
 
-test('keys 1–0 show the quick images of the slot last used; not while typing; Space starts and stops the rotation', async ({ page, request }) => {
+test('keys 1–0 and Shift+1–0 show the quick images of the slot last used; not while typing; Space starts and stops the rotation', async ({ page, request }) => {
   await loggedIn(page)
-  await setSlot(request, 1, { quick: [fixture(1), fixture(2), fixture(3)], imageUrl: null,
+  // quick images 1–3 and 11 (the eleventh: Shift+1)
+  await setSlot(request, 1, { quick: [fixture(1), fixture(2), fixture(3), ...Array(7).fill(null), fixture(5)], imageUrl: null,
     rotation: { active: false, items: [fixture(1), fixture(3)], intervalSec: 12 } })
   await setSlot(request, 2, { quick: [fixture(4), fixture(5)], imageUrl: null, rotation: null })
   await page.goto('/control')
@@ -14,18 +15,25 @@ test('keys 1–0 show the quick images of the slot last used; not while typing; 
 
   await page.keyboard.press('2')
   await expect.poll(async () => (await slotOf(request, 1)).imageUrl).toBe(fixture(2).url)
+  await expect(cell(page, 1, 10)).toBeVisible() // the second ten (4 rows of 5)
+  await page.keyboard.press('Shift+Digit1')
+  await expect.poll(async () => (await slotOf(request, 1)).imageUrl).toBe(fixture(5).url)
+  await page.keyboard.press('Shift+Digit2') // nothing there: the image stays
+  await page.waitForTimeout(300)
+  expect((await slotOf(request, 1)).imageUrl).toBe(fixture(5).url)
 
   // typing in a field: no key works
   await page.getByTestId('slot-1').getByRole('button', { name: /URL/ }).click()
   await page.getByPlaceholder('https://example.com/image.png').type('3')
   await page.waitForTimeout(400)
-  expect((await slotOf(request, 1)).imageUrl).toBe(fixture(2).url)
+  expect((await slotOf(request, 1)).imageUrl).toBe(fixture(5).url)
   await page.getByTestId('slot-1').getByRole('button', { name: 'Cancel' }).click()
 
   // Space: the rotation set up last starts again, with its seconds; again: stops
   await page.keyboard.press(' ')
   await expect.poll(async () => (await slotOf(request, 1)).rotation?.active).toBe(true)
   expect((await slotOf(request, 1)).rotation.intervalSec).toBe(12)
+  await expect(page.getByTestId('slot-1').getByText(/Rotating/)).toBeVisible() // the controller knows (its answer)
   await page.keyboard.press(' ')
   await expect.poll(async () => (await slotOf(request, 1)).rotation?.active).toBe(false)
 

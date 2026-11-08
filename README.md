@@ -10,8 +10,9 @@ without the players being distracted by sudden changes.
 ## What it does
 
 - **Slots** — each slot is one image shown in OBS: a browser source with `/display?slot=N`.
-- **Quick images** — ten prepared images below each slot (2 rows of 5). A click shows one; keys **1–9, 0** do the
-  same for the slot last used. Drop an image file onto a quick image (or paste into a chosen one) to upload it there.
+- **Quick images** — twenty prepared images below each slot (4 rows of 5). A click shows one; keys **1–9, 0** do
+  the same for the first ten and **Shift+1–0** for the second ten, for the slot last used. Drop an image file onto a
+  quick image (or paste into a chosen one) to upload it there.
 - **Rotation** — "Rotate…": choose several quick images in order and the seconds per image (10 by default, the
   last value is remembered, adjustable while it runs). **Space** starts the last rotation again or stops it.
 - **Calm changes** — every change fades: the new image fades in while the old one fades out, with complementary
