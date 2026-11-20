@@ -1,16 +1,22 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search, CheckCircle2, RotateCw } from 'lucide-react'
-import { fetchAdenaiImages, matchesSearch } from '../../services/adenai'
+import { fetchCampaignImages, matchesSearch } from '../../services/adenai'
 
 const TOP_TAGS = 24
 
+const SET_KEY = 'obs-campaign-set'
+const label = (p) => p.charAt(0).toUpperCase() + p.slice(1)
+
 /**
  * AdenaiBrowser Component
- * The Adenai map's media library to pick from (LibraryPicker's "Adenai" tab): search, category and the most used
- * tags of what is shown as filters (all chosen tags must be on an image).
+ * The campaigns' pictures to pick from (LibraryPicker's "Campaigns" tab, services/adenai.js): which campaign's set
+ * (Adenai, another campaign, or all — remembered), then search, category and the most used tags of what is shown as
+ * filters (all chosen tags must be on an image). Titles and tags are the chosen campaign's own.
  */
 function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
-  const [images, setImages] = useState([])
+  const [data, setData] = useState({ projects: [], images: () => [] })
+  const [set, setSetState] = useState(() => { try { return localStorage.getItem(SET_KEY) ?? 'adenai' } catch { return 'adenai' } })
+  const chooseSet = (v) => { setSetState(v); setCategory(''); setTags([]); try { localStorage.setItem(SET_KEY, v) } catch { /* private window */ } }
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
@@ -21,7 +27,7 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
     setLoading(true)
     setError(null)
     try {
-      setImages(await fetchAdenaiImages({ fresh }))
+      setData(await fetchCampaignImages({ fresh }))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -30,6 +36,8 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
   }
   useEffect(() => { load() }, [])
 
+  const activeSet = set && !data.projects.includes(set) && data.projects.length ? '' : set
+  const images = useMemo(() => data.images(activeSet), [data, activeSet])
   const categories = useMemo(() => [...new Set(images.map((i) => i.category))].sort(), [images])
   const inCategory = useMemo(() => images.filter((i) => !category || i.category === category), [images, category])
   const shown = useMemo(
@@ -55,10 +63,19 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search title, caption, tags…"
-            aria-label="Search Adenai images"
+            aria-label="Search campaign images"
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
+        <select
+          value={activeSet}
+          onChange={(e) => chooseSet(e.target.value)}
+          aria-label="Campaign"
+          className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+        >
+          {data.projects.map((p) => <option key={p} value={p}>{label(p)}</option>)}
+          <option value="">All campaigns</option>
+        </select>
         <select
           value={category}
           onChange={(e) => { setCategory(e.target.value); setTags([]) }}
@@ -71,7 +88,7 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
         <button
           type="button"
           onClick={() => load(true)}
-          title="Load the Adenai library again"
+          title="Load the pictures again"
           className="px-3 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50"
         >
           <RotateCw className="w-4 h-4" />
@@ -105,11 +122,11 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className="text-red-600 text-sm">Couldn’t load the Adenai library: {error}</p>
+            <p className="text-red-600 text-sm">Couldn’t load the campaigns’ pictures: {error}</p>
           </div>
         ) : shown.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">No Adenai images match</p>
+            <p className="text-gray-500">No pictures match</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -146,7 +163,7 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
         )}
       </div>
       <p className="text-xs text-gray-400">
-        {shown.length} of {images.length} images from the Adenai map — shown in the slot from there, not copied into this library.
+        {shown.length} of {images.length} images {activeSet ? `of ${label(activeSet)}` : 'of all campaigns'}, from the Grimoire’s image library — shown in the slot from there, not copied into this library.
       </p>
     </div>
   )

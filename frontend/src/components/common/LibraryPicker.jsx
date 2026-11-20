@@ -80,7 +80,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
         <div className="space-y-4">
           {/* Source: this library or the Adenai map's */}
           <div className="flex gap-1 border-b border-gray-200" role="tablist">
-            {[['library', 'OBS library'], ['adenai', 'Adenai']].map(([id, label]) => (
+            {[['library', 'OBS library'], ['adenai', 'Campaigns']].map(([id, label]) => (
               <button
                 key={id}
                 type="button"
