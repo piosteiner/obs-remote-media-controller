@@ -13,6 +13,19 @@ const MAX_BYTES = 10 * 1024 * 1024 // as the server
 const THUMB = 400
 const END_GRACE_MS = 750
 const TOKEN = 'obs-demo-file:'
+// the library's choices — the Grimoire's music section has these (server/src/kinds.js there); the demo keeps its own
+// library in this browser
+const LIBRARY_OPTIONS = {
+  sounds: ['Ambience', 'Music', 'Music with vocals'],
+  settings: ['Town & city', 'Village', 'Tavern & inn', 'Market', 'Court & ballroom', 'Festival', 'Forest', 'Jungle', 'Desert', 'Arctic & winter', 'Mountains', 'Sea & coast', 'Underwater', 'Swamp', 'Volcano', 'Cave & underground', 'Dungeon & sewers', 'Ruins & temples', 'Wilderness & travel', 'Camp & rest', 'Sky', 'Rain & storm', 'Elven', 'Dwarven', 'Far east'],
+  moods: ['Calm', 'Cheerful', 'Romantic', 'Mysterious', 'Tense', 'Dark & eerie', 'Sad', 'Epic', 'Combat'],
+}
+const track = (x) => ({ id: x.id, name: x.name, videoId: x.videoId, title: x.title || x.name, sound: x.sound || null, settings: x.settings || [], moods: x.moods || [], length: null, channel: null, addedAt: x.addedAt || null })
+const details = (body = {}) => ({
+  ...('sound' in body ? { sound: LIBRARY_OPTIONS.sounds.includes(body.sound) ? body.sound : null } : {}),
+  ...('settings' in body ? { settings: LIBRARY_OPTIONS.settings.filter((o) => (body.settings || []).includes(o)) } : {}),
+  ...('moods' in body ? { moods: LIBRARY_OPTIONS.moods.filter((o) => (body.moods || []).includes(o)) } : {}),
+})
 
 // ---- live updates ------------------------------------------------------------------------------------------------
 const listeners = new Map() // event → Set(fn)
@@ -235,13 +248,17 @@ async function route(method, path, body) {
     const send = ({ state }) => ok({ data: state })
     const action = [id, sub, subId].filter(Boolean).join('/')
     if (M === 'GET' && !id) return ok({ data: await playerState() })
+    if (M === 'GET' && id === 'library') return ok({ data: { tracks: ((await read('player', defaultState)).saved || []).map(track), options: LIBRARY_OPTIONS } })
     if (M === 'POST' && (action === 'load' || action === 'queue' || action === 'saved')) {
       const video = await resolveVideo(body)
       if (!video) return fail(400, 'Not a valid YouTube link')
       if (action === 'load') return send(await updatePlayer((s) => startVideo(s, video)))
       if (action === 'queue') return send(await updatePlayer((s) => { if (!s.current) startVideo(s, video); else s.queue.push({ id: newId(), ...video }) }))
       const name = (body.name || '').trim() || video.title
-      return send(await updatePlayer((s) => { s.saved.push({ id: newId(), name, ...video }) }))
+      const item = { id: newId(), name, ...video, ...details(body), addedAt: new Date().toISOString() }
+      await updatePlayer((s) => { s.saved.push(item) })
+      emit('library:changed', { at: Date.now() })
+      return ok({ data: track(item) }, 201)
     }
     if (M === 'POST' && action === 'play') return send(await updatePlayer((s) => {
       if (!s.current) return
@@ -279,12 +296,18 @@ async function route(method, path, body) {
       }))
     }
     if (id === 'saved' && M === 'PUT') {
-      const name = (body?.name || '').trim()
-      if (!name) return fail(400, 'Name is required')
-      const r = await updatePlayer((s) => { const it = s.saved.find((x) => x.id === sub); if (it) it.name = name; return !!it })
-      return r.result ? send(r) : fail(404, 'Saved link not found')
+      const name = (body?.name ?? '').trim()
+      if (body && 'name' in body && !name) return fail(400, 'Name is required')
+      const r = await updatePlayer((s) => { const it = s.saved.find((x) => x.id === sub); if (it) Object.assign(it, name ? { name } : {}, details(body)); return it ? track(it) : null })
+      if (!r.result) return fail(404, 'Saved link not found')
+      emit('library:changed', { at: Date.now() })
+      return ok({ data: r.result })
     }
-    if (id === 'saved' && M === 'DELETE') return send(await updatePlayer((s) => { s.saved = s.saved.filter((x) => x.id !== sub) }))
+    if (id === 'saved' && M === 'DELETE') {
+      await updatePlayer((s) => { s.saved = s.saved.filter((x) => x.id !== sub) })
+      emit('library:changed', { at: Date.now() })
+      return ok({})
+    }
   }
 
   return fail(404, 'Not found')

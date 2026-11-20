@@ -14,21 +14,23 @@ const END_GRACE_MS = 750;
 let io = null;
 let endTimer = null;
 
-// Title via YouTube oEmbed (no API key needed); falls back to the id
-async function fetchTitle(videoId) {
+// Title and channel via YouTube oEmbed (no API key needed); the title falls back to the id
+async function fetchInfo(videoId) {
   try {
     const response = await fetch(
       `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}`,
       { signal: AbortSignal.timeout(4000) }
     );
-    if (!response.ok) return videoId;
-    return (await response.json()).title || videoId;
+    if (!response.ok) return { title: videoId };
+    const data = await response.json();
+    return { title: data.title || videoId, channel: data.author_name || undefined };
   } catch {
-    return videoId;
+    return { title: videoId };
   }
 }
 
-const publicState = (state) => ({ ...state, serverTime: Date.now() });
+// the saved links are the Grimoire's now (services/musicLibrary.js); an old list in the file is not sent
+const publicState = ({ saved, ...state }) => ({ ...state, serverTime: Date.now() });
 
 function scheduleEnd(state) {
   clearTimeout(endTimer);
@@ -94,7 +96,7 @@ function init(socketServer) {
 module.exports = {
   REPEAT_MODES,
   parseVideoId,
-  fetchTitle,
+  fetchInfo,
   currentPosition,
   startVideo,
   advance,

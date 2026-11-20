@@ -32,6 +32,7 @@ const COLOURS = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#f39c12', '#16a085
   Object.assign(process.env, {
     PORT: String(PORT), OBS_DATA_DIR: dataDir, OBS_UPLOADS_DIR: uploadsDir, ADMIN_API_KEY: 'test-key',
     API_BASE_URL: `http://localhost:${PORT}`, ALLOWED_ORIGINS: 'http://localhost:4192',
+    GRIMOIRE_URL: 'http://127.0.0.1:9', ADENAI_MEDIA_KEY: 'test-media-key', // never the real Grimoire
   })
   for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { fs.rmSync(dir, { recursive: true, force: true }); process.exit(0) })
   require('../../../backend/src/server.js')

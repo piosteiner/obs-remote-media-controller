@@ -3,7 +3,7 @@
 // server, a new connection gets the player's state; the clock is this browser's.
 import { on as listen, playerState, reportDuration } from './server'
 
-const EVENTS = ['slot:updated', 'scene:loaded', 'player:state']
+const EVENTS = ['slot:updated', 'scene:loaded', 'player:state', 'library:changed']
 
 export function demoSocket() {
   const handlers = new Map()

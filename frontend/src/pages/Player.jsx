@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
-  Play, ListPlus, BookmarkPlus, Trash2, Edit2, ChevronUp, ChevronDown,
+  Play, ListPlus, BookmarkPlus, Trash2, ChevronUp, ChevronDown,
   Repeat, Repeat1, ExternalLink, Square, Youtube
 } from 'lucide-react'
 import Header from '../components/common/Header'
-import Modal from '../components/common/Modal'
+import MusicLibrary, { IconButton } from '../components/player/MusicLibrary'
 import useStore from '../store'
 import useToastStore from '../store/toast'
 import websocketService from '../services/websocket'
@@ -18,7 +18,8 @@ const REPEAT_OPTIONS = [
 ]
 
 /**
- * Player Page - Shared YouTube player: current link, queue, saved links, repeat.
+ * Player Page - Shared YouTube player: current link, queue, the library (the Grimoire's music section:
+ * components/player/MusicLibrary.jsx), repeat.
  * Playback itself happens in the overlay in the bottom-right corner.
  */
 function Player() {
@@ -28,8 +29,7 @@ function Player() {
   const [url, setUrl] = useState('')
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
-  const [renaming, setRenaming] = useState(null)
-  const [newName, setNewName] = useState('')
+  const [justSaved, setJustSaved] = useState(null) // opened in the library's editor: sound, setting and mood
 
   useEffect(() => {
     websocketService.connect()
@@ -42,7 +42,7 @@ function Player() {
 
   // Add-link form actions; the link is cleared after a successful action
   const submitLink = async (call, successMessage) => {
-    if (!url.trim()) return
+    if (!url.trim()) return null
     setBusy(true)
     const result = await playerAction(call, 'Not a valid YouTube link')
     setBusy(false)
@@ -51,18 +51,11 @@ function Player() {
       setName('')
       useToastStore.getState().success(successMessage)
     }
-  }
-
-  const submitRename = async (e) => {
-    e.preventDefault()
-    if (!renaming || !newName.trim()) return
-    const result = await playerAction(api => api.rename(renaming.id, newName.trim()))
-    if (result?.success) setRenaming(null)
+    return result
   }
 
   const current = player?.current
   const queue = player?.queue || []
-  const saved = player?.saved || []
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -179,7 +172,7 @@ function Player() {
               <button
                 type="button"
                 disabled={busy || !url.trim()}
-                onClick={() => submitLink(api => api.save(url, name), 'Link saved')}
+                onClick={async () => { const r = await submitLink(api => api.save(url, name), 'Saved to the library — now its sound, setting and mood'); if (r?.success) setJustSaved({ ...r.data, at: Date.now() }) }}
                 className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
               >
                 <BookmarkPlus className="w-4 h-4" /> Save
@@ -188,9 +181,9 @@ function Player() {
           </form>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Queue */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* Queue: the narrow column — the library has far more */}
+          <section className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-gray-900 dark:text-gray-100">Up next ({queue.length})</h2>
               {queue.length > 0 && (
@@ -206,7 +199,7 @@ function Player() {
                 {queue.map((item, index) => (
                   <li key={item.id} className="flex items-center gap-3 p-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <span className="w-5 text-sm text-gray-400 dark:text-gray-500 text-right">{index + 1}</span>
-                    <img src={thumbnailFor(item.videoId)} alt="" className="w-20 aspect-video object-cover rounded" />
+                    <img src={thumbnailFor(item.videoId)} alt="" className="w-16 aspect-video object-cover rounded" />
                     <p className="flex-1 min-w-0 text-sm text-gray-900 dark:text-gray-100 truncate" title={item.title}>{item.title}</p>
                     <div className="flex items-center">
                       <IconButton title="Play now" onClick={() => playerAction(api => api.queuePlay(item.id))}><Play className="w-4 h-4" /></IconButton>
@@ -220,69 +213,13 @@ function Player() {
             )}
           </section>
 
-          {/* Saved links */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Saved links ({saved.length})</h2>
-            {saved.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No saved links yet. Use “Save” on a link to keep it here.</p>
-            ) : (
-              <ul className="space-y-2">
-                {saved.map((item) => (
-                  <li key={item.id} className="flex items-center gap-3 p-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <img src={thumbnailFor(item.videoId)} alt="" className="w-20 aspect-video object-cover rounded" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={item.name}>{item.name}</p>
-                      {item.title !== item.name && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={item.title}>{item.title}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center">
-                      <IconButton title="Play now" onClick={() => playerAction(api => api.load(item.videoId, item.title))}><Play className="w-4 h-4" /></IconButton>
-                      <IconButton title="Add to queue" onClick={() => playerAction(api => api.queueAdd(item.videoId, item.title))}><ListPlus className="w-4 h-4" /></IconButton>
-                      <IconButton title="Rename" onClick={() => { setRenaming(item); setNewName(item.name) }}><Edit2 className="w-4 h-4" /></IconButton>
-                      <IconButton title="Delete saved link" danger onClick={() => playerAction(api => api.removeSaved(item.id))}><Trash2 className="w-4 h-4" /></IconButton>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <div className="lg:col-span-2">
+            <MusicLibrary editRequest={justSaved} />
+          </div>
         </div>
       </main>
 
-      <Modal isOpen={!!renaming} onClose={() => setRenaming(null)} title="Rename saved link">
-        <form onSubmit={submitRename} className="space-y-4">
-          <input
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            autoFocus
-          />
-          <div className="flex gap-3">
-            <button type="button" onClick={() => setRenaming(null)} className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600">
-              Cancel
-            </button>
-            <button type="submit" disabled={!newName.trim()} className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50">
-              Save
-            </button>
-          </div>
-        </form>
-      </Modal>
     </div>
-  )
-}
-
-function IconButton({ title, onClick, disabled, danger, children }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`p-2 rounded-lg text-gray-500 dark:text-gray-400 disabled:opacity-30 ${danger ? 'hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30' : 'hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-    >
-      {children}
-    </button>
   )
 }
 

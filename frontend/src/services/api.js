@@ -109,8 +109,10 @@ export const playerAPI = {
   queueMove: (id, direction) => api.post(`/player/queue/${id}/move`, { direction }),
   queueRemove: (id) => api.delete(`/player/queue/${id}`),
   queueClear: () => api.delete('/player/queue'),
-  save: (url, name) => api.post('/player/saved', { url, name }),
-  rename: (id, name) => api.put(`/player/saved/${id}`, { name }),
+  // the library: the Grimoire's music section (backend/src/services/musicLibrary.js)
+  library: (fresh) => api.get('/player/library', { params: fresh ? { fresh: 1 } : {} }),
+  save: (url, name, details = {}) => api.post('/player/saved', { url, name, ...details }),
+  updateSaved: (id, patch) => api.put(`/player/saved/${id}`, patch),
   removeSaved: (id) => api.delete(`/player/saved/${id}`),
 }
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const player = require('../services/playerService');
+const library = require('../services/musicLibrary');
 
 const badRequest = (res, message) =>
   res.status(400).json({ success: false, error: { message } });
@@ -11,8 +12,8 @@ const notFound = (res, message) =>
 async function resolveVideo(body) {
   const videoId = player.parseVideoId(body.url || body.videoId);
   if (!videoId) return null;
-  const title = (body.title || '').trim() || await player.fetchTitle(videoId);
-  return { videoId, title };
+  const info = await player.fetchInfo(videoId);
+  return { videoId, title: (body.title || '').trim() || info.title, channel: info.channel };
 }
 
 const send = (res, { state }) => res.json({ success: true, data: state });
@@ -126,32 +127,25 @@ router.delete('/queue', async (req, res) => {
   send(res, await player.update((s) => { s.queue = []; }));
 });
 
-// Saved links
+// The library: the Grimoire's music section (services/musicLibrary.js) — read, saved to, changed, deleted
+const libraryError = (res, err) => res.status(err.status || 502).json({ success: false, error: { message: err.message } });
+
+router.get('/library', async (req, res) => {
+  try { res.json({ success: true, data: await library.list({ fresh: req.query.fresh === '1' }) }); } catch (err) { libraryError(res, err); }
+});
+
 router.post('/saved', async (req, res) => {
   const video = await resolveVideo(req.body);
   if (!video) return badRequest(res, 'Not a valid YouTube link');
-  const name = (req.body.name || '').trim() || video.title;
-  send(res, await player.update((s) => {
-    s.saved.push({ id: player.newId(), name, ...video });
-  }));
+  try { res.status(201).json({ success: true, data: await library.save(video, req.body) }); } catch (err) { libraryError(res, err); }
 });
 
 router.put('/saved/:id', async (req, res) => {
-  const name = (req.body.name || '').trim();
-  if (!name) return badRequest(res, 'Name is required');
-  const { state, result } = await player.update((s) => {
-    const item = s.saved.find(entry => entry.id === req.params.id);
-    if (item) item.name = name;
-    return !!item;
-  });
-  if (!result) return notFound(res, 'Saved link not found');
-  send(res, { state });
+  try { res.json({ success: true, data: await library.update(req.params.id, req.body) }); } catch (err) { libraryError(res, err); }
 });
 
 router.delete('/saved/:id', async (req, res) => {
-  send(res, await player.update((s) => {
-    s.saved = s.saved.filter(entry => entry.id !== req.params.id);
-  }));
+  try { await library.remove(req.params.id); res.json({ success: true }); } catch (err) { libraryError(res, err); }
 });
 
 module.exports = router;

@@ -39,6 +39,7 @@ app.use('/api', apiRoutes);
 // WebSocket handling
 require('./services/websocketService')(io);
 require('./services/playerService').init(io);
+require('./services/musicLibrary').init(io); // the library's changes to every page
 
 // Error handler
 app.use(require('./middleware/errorHandler'));

@@ -104,6 +104,9 @@ class WebSocketService {
       useStore.getState().setCurrentScene(data.sceneId)
     })
 
+    // the player's library changed (saved, changed, deleted — on any device): pages read it again
+    this.socket.on('library:changed', () => window.dispatchEvent(new Event('library:changed')))
+
     // Shared YouTube player
     this.socket.on('player:state', (state) => {
       useStore.getState().setPlayer(state)

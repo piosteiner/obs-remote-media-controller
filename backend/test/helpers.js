@@ -14,7 +14,9 @@ const freePort = () => new Promise((resolve, reject) => {
   srv.on('error', reject);
 });
 
-async function startServer() {
+// extraEnv: e.g. GRIMOIRE_URL of a stand-in Grimoire; by default an address where nothing answers — a test never
+// reaches the real Grimoire (the .env's values are not taken over: an empty or set value stays)
+async function startServer(extraEnv = {}) {
   const port = await freePort();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'obs-test-'));
   const dataDir = path.join(dir, 'data');
@@ -24,7 +26,7 @@ async function startServer() {
   const { NODE_TEST_CONTEXT, ...env } = process.env;
   const child = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'server.js')], {
     env: { ...env, PORT: String(port), OBS_DATA_DIR: dataDir, OBS_UPLOADS_DIR: uploadsDir, ADMIN_API_KEY: KEY,
-      API_BASE_URL: url, ALLOWED_ORIGINS: 'http://localhost' },
+      API_BASE_URL: url, ALLOWED_ORIGINS: 'http://localhost', GRIMOIRE_URL: 'http://127.0.0.1:9', ADENAI_MEDIA_KEY: 'test-media-key', ...extraEnv },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let log = '';
