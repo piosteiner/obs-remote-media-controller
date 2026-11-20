@@ -29,10 +29,19 @@
         }
       }(window.location))
     </script>
-    <script type="module" crossorigin src="/assets/index-DAlBcbPn.js"></script>
+    <!-- light or dark (2026-11-20): remembered as obs-theme, otherwise the system's; never on /display — OBS shows it
+         as a transparent page -->
+    <script>
+      (function () {
+        if (/^\/display/.test(location.pathname)) return;
+        var t = null; try { t = localStorage.getItem('obs-theme') } catch (e) {}
+        if (t === 'dark' || (!t && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-DIOLfezL.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/react-vendor-Bl19J5gz.js">
     <link rel="modulepreload" crossorigin href="/assets/socket-vendor-CUkmNz_4.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-BqtW6OMG.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-Dfm5Dpo8.css">
   </head>
   <body>
     <div id="root"></div>
