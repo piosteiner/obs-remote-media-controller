@@ -228,22 +228,22 @@ function SlotControl({ slotId, slotData }) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6" data-testid={`slot-${slotId}`}>
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6" data-testid={`slot-${slotId}`}>
       <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Slot {slotId}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Slot {slotId}</h3>
         {imageUrl && (
           <div className="flex gap-2">
             <button
               onClick={handleSaveToLibrary}
               disabled={uploading}
-              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Save to library"
             >
               <Save className="w-5 h-5" />
             </button>
             <button
               onClick={handleClear}
-              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
               title="Clear slot"
             >
               <X className="w-5 h-5" />
@@ -270,15 +270,15 @@ function SlotControl({ slotId, slotData }) {
             />
           </div>
         ) : (
-          <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-            <div className="text-center text-gray-400">
+          <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+            <div className="text-center text-gray-400 dark:text-gray-500">
               <ImageIcon className="w-12 h-12 mx-auto mb-2" />
               <p className="text-sm">No image</p>
             </div>
           </div>
         )}
         {updatedAt && (
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Updated: {new Date(updatedAt).toLocaleString()}
           </p>
         )}
@@ -295,7 +295,7 @@ function SlotControl({ slotId, slotData }) {
               ref={pasteAreaRef}
               contentEditable
               tabIndex={0}
-              className="w-full px-4 py-8 border-2 border-dashed border-blue-400 bg-blue-50 rounded-lg text-center text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-text"
+              className="w-full px-4 py-8 border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-center text-blue-600 dark:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-text"
             >
               <Clipboard className="w-8 h-8 mx-auto mb-2" />
               <p className="font-medium">Click here and press Ctrl+V (⌘+V on Mac)</p>
@@ -303,9 +303,9 @@ function SlotControl({ slotId, slotData }) {
             </div>
             <button
               onClick={() => setShowPasteArea(false)}
-              className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm hover:bg-gray-100"
+              className="absolute top-2 right-2 p-1 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <X className="w-4 h-4 text-gray-600" />
+              <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             </button>
           </div>
         )}
@@ -318,7 +318,7 @@ function SlotControl({ slotId, slotData }) {
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="https://example.com/image.png"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               autoFocus
             />
             <button
@@ -333,7 +333,7 @@ function SlotControl({ slotId, slotData }) {
                 setShowUrlInput(false)
                 setUrlInput('')
               }}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600"
             >
               Cancel
             </button>
@@ -351,7 +351,7 @@ function SlotControl({ slotId, slotData }) {
 
             <button
               onClick={() => setShowUrlInput(true)}
-              className="flex items-center justify-center space-x-2 px-4 py-3 bg-white border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-primary-400 hover:text-primary-600 transition-colors"
+              className="flex items-center justify-center space-x-2 px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
             >
               <LinkIcon className="w-4 h-4" />
               <span>URL</span>

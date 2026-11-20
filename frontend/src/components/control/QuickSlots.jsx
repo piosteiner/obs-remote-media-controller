@@ -159,10 +159,10 @@ function QuickSlots({ slotId, slotData, current }) {
   return (
     <div className="mt-4" data-testid={`quick-slots-${slotId}`} onPointerDown={() => setActiveSlot(slotId)} onFocusCapture={() => setActiveSlot(slotId)}>
       <div className="flex items-center justify-between mb-2 gap-2">
-        <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
           Quick images
           {active && (
-            <span className="flex items-center gap-1 text-[11px] font-normal text-gray-400" data-testid="keys-hint" title="Keyboard: 1–9 and 0 show quick image 1–10, Shift+1–0 quick image 11–20, Space starts or stops the rotation">
+            <span className="flex items-center gap-1 text-[11px] font-normal text-gray-400 dark:text-gray-500" data-testid="keys-hint" title="Keyboard: 1–9 and 0 show quick image 1–10, Shift+1–0 quick image 11–20, Space starts or stops the rotation">
               <Keyboard className="w-3.5 h-3.5" /> keys 1–0 · ⇧1–0 · Space
             </span>
           )}
@@ -172,14 +172,14 @@ function QuickSlots({ slotId, slotData, current }) {
             <button
               type="button"
               onClick={addCurrent}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:border-primary-400"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-400"
               title="Put the image shown now into the first free quick slot"
             >
               <Plus className="w-3.5 h-3.5" /> Current
             </button>
           )}
           {rotating && !choosing && (
-            <label className="flex items-center gap-1 text-xs text-gray-600">
+            <label className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
               every
               <input
                 type="number"
@@ -190,7 +190,7 @@ function QuickSlots({ slotId, slotData, current }) {
                 onBlur={changeSeconds}
                 onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
                 aria-label="Seconds per image"
-                className="w-14 px-1.5 py-0.5 border border-gray-300 rounded-md"
+                className="w-14 px-1.5 py-0.5 border border-gray-300 dark:border-gray-600 rounded-md"
               />
               s
             </label>
@@ -199,7 +199,7 @@ function QuickSlots({ slotId, slotData, current }) {
             <button
               type="button"
               onClick={stopRotation}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-md bg-red-50 border border-red-200 text-red-700 hover:bg-red-100"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50"
             >
               <Square className="w-3.5 h-3.5" /> Stop rotation
             </button>
@@ -209,7 +209,7 @@ function QuickSlots({ slotId, slotData, current }) {
               type="button"
               onClick={startChoosing}
               disabled={quick.filter(Boolean).length < 2}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:border-primary-400 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-400 disabled:opacity-40 disabled:cursor-not-allowed"
               title="Show several quick images in turn, fading into each other"
             >
               <Repeat className="w-3.5 h-3.5" /> {rotating ? 'Change rotation' : 'Rotate…'}
@@ -219,7 +219,7 @@ function QuickSlots({ slotId, slotData, current }) {
       </div>
 
       {choosing && (
-        <p className="text-xs text-primary-700 mb-2">Click the images to rotate, in the order they should come.</p>
+        <p className="text-xs text-primary-700 dark:text-primary-300 mb-2">Click the images to rotate, in the order they should come.</p>
       )}
 
       <div className="grid grid-cols-5 gap-2">
@@ -235,9 +235,9 @@ function QuickSlots({ slotId, slotData, current }) {
               className={`group relative aspect-video rounded-md overflow-hidden border-2 ${
                 choosing && order >= 0 ? 'border-primary-500'
                   : isCurrent(q) ? 'border-green-500'
-                  : inRotation(q) ? 'border-primary-300'
-                  : q ? 'border-gray-200' : 'border-dashed border-gray-300'
-              } ${q ? 'bg-gray-900' : 'bg-gray-50'}`}
+                  : inRotation(q) ? 'border-primary-300 dark:border-primary-700'
+                  : q ? 'border-gray-200 dark:border-gray-700' : 'border-dashed border-gray-300 dark:border-gray-600'
+              } ${q ? 'bg-gray-900' : 'bg-gray-50 dark:bg-gray-900'}`}
             >
               {q ? (
                 <button
@@ -259,7 +259,7 @@ function QuickSlots({ slotId, slotData, current }) {
                   type="button"
                   onClick={() => !choosing && setPickFor(i)}
                   disabled={choosing}
-                  className="w-full h-full flex items-center justify-center text-gray-400 hover:text-primary-600 disabled:cursor-default"
+                  className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 disabled:cursor-default"
                   title="Choose an image for this quick slot"
                 >
                   <Plus className="w-5 h-5" />
@@ -267,7 +267,7 @@ function QuickSlots({ slotId, slotData, current }) {
               )}
 
               {uploadingCell === i && (
-                <span className="absolute inset-0 flex items-center justify-center bg-white/70" data-testid="cell-uploading">
+                <span className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-800/70" data-testid="cell-uploading">
                   <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600" />
                 </span>
               )}
@@ -285,10 +285,10 @@ function QuickSlots({ slotId, slotData, current }) {
               )}
               {q && !choosing && (
                 <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                  <button type="button" onClick={() => setPickFor(i)} className="p-1 rounded bg-white/90 text-gray-700 hover:bg-white" title="Replace">
+                  <button type="button" onClick={() => setPickFor(i)} className="p-1 rounded bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700" title="Replace">
                     <RefreshCw className="w-3 h-3" />
                   </button>
-                  <button type="button" onClick={() => setCell(i, null)} className="p-1 rounded bg-white/90 text-red-600 hover:bg-white" title="Empty this quick slot">
+                  <button type="button" onClick={() => setCell(i, null)} className="p-1 rounded bg-white/90 dark:bg-gray-800/90 text-red-600 dark:text-red-400 hover:bg-white dark:hover:bg-gray-700" title="Empty this quick slot">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -300,7 +300,7 @@ function QuickSlots({ slotId, slotData, current }) {
 
       {choosing && (
         <div className="flex flex-wrap items-center gap-2 mt-3">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             every
             <input
               type="number"
@@ -308,13 +308,13 @@ function QuickSlots({ slotId, slotData, current }) {
               max="3600"
               value={intervalSec}
               onChange={(e) => setIntervalSec(e.target.value)}
-              className="w-20 px-2 py-1 border border-gray-300 rounded-md"
+              className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md"
               aria-label="Seconds per image"
             />
             seconds
           </label>
           <div className="flex-1" />
-          <button type="button" onClick={() => setChoosing(false)} className="px-3 py-1.5 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">
+          <button type="button" onClick={() => setChoosing(false)} className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
             Cancel
           </button>
           <button

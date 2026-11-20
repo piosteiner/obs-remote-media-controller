@@ -32,7 +32,7 @@ function ConfirmDialog({
   // Color variants
   const variants = {
     danger: {
-      icon: 'text-red-600',
+      icon: 'text-red-600 dark:text-red-400',
       button: 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
     },
     warning: {
@@ -40,7 +40,7 @@ function ConfirmDialog({
       button: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
     },
     primary: {
-      icon: 'text-primary-600',
+      icon: 'text-primary-600 dark:text-primary-400',
       button: 'bg-primary-600 hover:bg-primary-700 focus:ring-primary-500'
     }
   }
@@ -58,23 +58,23 @@ function ConfirmDialog({
       {/* Dialog */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all"
+          className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full transform transition-all"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Content */}
           <div className="p-6">
             {/* Icon */}
-            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700">
               <AlertTriangle className={`w-6 h-6 ${style.icon}`} />
             </div>
 
             {/* Title */}
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 text-center mb-2">
               {title}
             </h3>
 
             {/* Message */}
-            <p className="text-sm text-gray-600 text-center mb-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
               {message}
             </p>
 
@@ -82,7 +82,7 @@ function ConfirmDialog({
             <div className="flex space-x-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
               >
                 {cancelText}
               </button>

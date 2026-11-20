@@ -135,7 +135,7 @@ function Scenes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header />
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -145,12 +145,12 @@ function Scenes() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Scene Presets</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Scene Presets</h1>
           <button
             onClick={handleCreateScene}
             className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700"
@@ -162,7 +162,7 @@ function Scenes() {
 
         {scenes.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">No scenes yet. Create your first scene!</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">No scenes yet. Create your first scene!</p>
             <button
               onClick={handleCreateScene}
               className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700"
@@ -175,25 +175,25 @@ function Scenes() {
             {scenes.map((scene) => (
               <div
                 key={scene.id}
-                className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                       {scene.name}
                     </h3>
-                    <p className="text-sm text-gray-600">{scene.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{scene.description}</p>
                   </div>
                   <button
                     onClick={() => handleDeleteScene(scene.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
 
                 <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                     Slots configured: {Object.keys(scene.slots || {}).length}
                   </p>
                 </div>
@@ -201,7 +201,7 @@ function Scenes() {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleCaptureScene(scene.id, scene.name)}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     title="Update scene with current slots"
                   >
                     <Camera className="w-4 h-4" />
@@ -230,7 +230,7 @@ function Scenes() {
       >
         <div className="space-y-4">
           <div>
-            <label htmlFor="sceneName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="sceneName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Scene Name *
             </label>
             <input
@@ -239,7 +239,7 @@ function Scenes() {
               value={newSceneName}
               onChange={(e) => setNewSceneName(e.target.value)}
               placeholder="e.g., Opening Presentation"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -251,7 +251,7 @@ function Scenes() {
           </div>
 
           <div>
-            <label htmlFor="sceneDescription" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="sceneDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Description (optional)
             </label>
             <textarea
@@ -260,15 +260,15 @@ function Scenes() {
               onChange={(e) => setNewSceneDescription(e.target.value)}
               placeholder="Describe when to use this scene..."
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
             />
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-sm text-blue-800">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
               <strong>Current slots:</strong> {Object.keys(slots).length} configured
             </p>
-            <p className="text-xs text-blue-600 mt-1">
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
               This scene will save your current slot configuration
             </p>
           </div>
@@ -276,7 +276,7 @@ function Scenes() {
           <div className="flex space-x-3 pt-2">
             <button
               onClick={() => setShowCreateModal(false)}
-              className="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Cancel
             </button>

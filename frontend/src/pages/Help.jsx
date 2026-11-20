@@ -15,19 +15,19 @@ function Help() {
   const Section = ({ id, icon: Icon, title, children }) => {
     const isExpanded = expandedSection === id
     return (
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <button
           onClick={() => toggleSection(id)}
-          className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
           <div className="flex items-center space-x-3">
-            <Icon className="w-6 h-6 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+            <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
           </div>
           {isExpanded ? (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
+            <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+            <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           )}
         </button>
         {isExpanded && (
@@ -40,13 +40,13 @@ function Help() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Help & Setup Guide</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Help & Setup Guide</h1>
+          <p className="text-gray-600 dark:text-gray-400">
             Learn how to use OBS Media Controller and set up OBS for remote image control
           </p>
         </div>
@@ -68,7 +68,7 @@ function Help() {
               <ol className="list-decimal list-inside space-y-2 mb-6">
                 <li>
                   In the URL field, enter:{" "}
-                  <code className="bg-gray-100 px-2 py-1 rounded text-sm">
+                  <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">
                     https://obs-media-control.piogino.ch/display?slot=1
                   </code>
                 </li>
@@ -84,9 +84,9 @@ function Help() {
                 Create more browser sources for Slot 2, 3, and 4:
               </p>
               <ul className="list-disc list-inside space-y-1 mb-6">
-                <li>Slot 2: <code className="bg-gray-100 px-2 py-1 rounded text-sm">https://obs-media-control.piogino.ch/display?slot=2</code></li>
-                <li>Slot 3: <code className="bg-gray-100 px-2 py-1 rounded text-sm">https://obs-media-control.piogino.ch/display?slot=3</code></li>
-                <li>Slot 4: <code className="bg-gray-100 px-2 py-1 rounded text-sm">https://obs-media-control.piogino.ch/display?slot=4</code></li>
+                <li>Slot 2: <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">https://obs-media-control.piogino.ch/display?slot=2</code></li>
+                <li>Slot 3: <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">https://obs-media-control.piogino.ch/display?slot=3</code></li>
+                <li>Slot 4: <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">https://obs-media-control.piogino.ch/display?slot=4</code></li>
               </ul>
 
               <h3 className="font-semibold text-lg mb-3">Step 4: Position Your Sources</h3>
@@ -96,8 +96,8 @@ function Help() {
                 <li>Right-click → Transform → Fit to screen (if needed)</li>
               </ul>
 
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
                   <strong>💡 Pro Tip:</strong> Create a dedicated scene for presentations with all 4 slots pre-configured!
                 </p>
               </div>
@@ -130,8 +130,8 @@ function Help() {
                 Click the <strong>X</strong> button in the top-right corner of any slot to remove the image.
               </p>
 
-              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800">
+              <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+                <p className="text-sm text-green-800 dark:text-green-200">
                   <strong>✨ Best Practice:</strong> Use your iPad or phone to control images while presenting from your computer!
                 </p>
               </div>
@@ -174,8 +174,8 @@ function Help() {
                 Hover over an image and click the red trash icon to remove it from the library.
               </p>
 
-              <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                <p className="text-sm text-purple-800">
+              <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <p className="text-sm text-purple-800 dark:text-purple-200">
                   <strong>📚 Workflow Tip:</strong> Before your meeting, upload all images to the Library. During the meeting, just click images to switch slots!
                 </p>
               </div>
@@ -204,8 +204,8 @@ function Help() {
                 Click the "Load Scene" button on any saved scene to instantly restore all 4 slots to that configuration.
               </p>
 
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
+              <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
                   <strong>⚠️ Note:</strong> Scene functionality is currently in development. Backend integration coming soon!
                 </p>
               </div>
@@ -221,7 +221,7 @@ function Help() {
               </p>
 
               <h4 className="font-semibold mb-2">URL Format:</h4>
-              <code className="block bg-gray-100 px-4 py-2 rounded text-sm mb-4">
+              <code className="block bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded text-sm mb-4">
                 https://obs-media-control.piogino.ch/display?slot=1
               </code>
 
@@ -233,8 +233,8 @@ function Help() {
                 <li>Black background when no image is set</li>
               </ul>
 
-              <div className="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                <p className="text-sm text-indigo-800">
+              <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+                <p className="text-sm text-indigo-800 dark:text-indigo-200">
                   <strong>🎬 Fun Fact:</strong> You can open Display pages in a regular browser to preview what OBS sees!
                 </p>
               </div>
@@ -355,8 +355,8 @@ function Help() {
                 <li>Sponsors: Rotate sponsor logos during breaks</li>
               </ul>
 
-              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-gray-800">
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 dark:from-blue-900/30 to-purple-50 dark:to-purple-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm text-gray-800 dark:text-gray-200">
                   <strong>🎨 Get Creative!</strong> This tool is designed for flexibility. Experiment with different layouts and workflows to find what works best for your content!
                 </p>
               </div>
@@ -365,9 +365,9 @@ function Help() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 p-6 bg-white rounded-lg border border-gray-200">
+        <div className="mt-12 p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <h3 className="font-semibold text-lg mb-2">Need More Help?</h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             This tool is designed to be intuitive, but if you have questions or suggestions, feel free to reach out!
           </p>
           <div className="flex gap-4">
@@ -375,12 +375,12 @@ function Help() {
               href="https://github.com/piosteiner/obs-remote-media-controller"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-primary-600 hover:text-primary-700"
+              className="flex items-center space-x-2 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
             >
               <ExternalLink className="w-4 h-4" />
               <span>GitHub Repository</span>
             </a>
-            <a href="/privacy.html" className="flex items-center space-x-2 text-primary-600 hover:text-primary-700">
+            <a href="/privacy.html" className="flex items-center space-x-2 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
               <span>Privacy</span>
             </a>
           </div>

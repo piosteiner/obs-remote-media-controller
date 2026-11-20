@@ -79,7 +79,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
       >
         <div className="space-y-4">
           {/* Source: this library or the Adenai map's */}
-          <div className="flex gap-1 border-b border-gray-200" role="tablist">
+          <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700" role="tablist">
             {[['library', 'OBS library'], ['adenai', 'Campaigns']].map(([id, label]) => (
               <button
                 key={id}
@@ -88,7 +88,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
                 aria-selected={source === id}
                 onClick={() => chooseSource(id)}
                 className={`px-4 py-2 -mb-px border-b-2 text-sm font-medium transition-colors ${
-                  source === id ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  source === id ? 'border-primary-600 text-primary-700 dark:text-primary-300' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
               >
                 {label}
@@ -101,13 +101,13 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
           ) : (<>
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search images..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
@@ -119,7 +119,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
               </div>
             ) : filteredImages.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   {searchTerm ? 'No images match your search' : 'No images in library yet'}
                 </p>
               </div>
@@ -132,8 +132,8 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
                     onClick={() => setSelectedImage(image)}
                     className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all ${
                       selectedImage?.id === image.id
-                        ? 'border-primary-500 ring-2 ring-primary-200'
-                        : 'border-gray-200 hover:border-primary-300'
+                        ? 'border-primary-500 ring-2 ring-primary-200 dark:ring-primary-800'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600'
                     }`}
                   >
                     <img
@@ -167,8 +167,8 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
 
           {/* Selected Image Info */}
           {selectedImage && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800">
+            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Selected:</strong> {selectedImage.originalName || selectedImage.filename}
               </p>
             </div>
@@ -178,7 +178,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
           <div className="flex space-x-3 pt-2">
             <button
               onClick={handleClose}
-              className="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Cancel
             </button>

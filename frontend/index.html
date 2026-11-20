@@ -29,6 +29,15 @@
         }
       }(window.location))
     </script>
+    <!-- light or dark (2026-11-20): remembered as obs-theme, otherwise the system's; never on /display — OBS shows it
+         as a transparent page -->
+    <script>
+      (function () {
+        if (/^\/display/.test(location.pathname)) return;
+        var t = null; try { t = localStorage.getItem('obs-theme') } catch (e) {}
+        if (t === 'dark' || (!t && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

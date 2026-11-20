@@ -73,10 +73,10 @@ export function ImageHoverPreview({ preview }) {
 
   return (
     <div
-      className="fixed z-[60] pointer-events-none bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden"
+      className="fixed z-[60] pointer-events-none bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
       style={{ left, top, width: PANEL_WIDTH }}
     >
-      <div className="bg-gray-100 flex items-center justify-center" style={{ height: imageHeight }}>
+      <div className="bg-gray-100 dark:bg-gray-700 flex items-center justify-center" style={{ height: imageHeight }}>
         <img
           src={image.thumbnailUrl || image.url}
           alt=""
@@ -84,11 +84,11 @@ export function ImageHoverPreview({ preview }) {
         />
       </div>
       <div className="px-3 py-2">
-        <p className="text-sm font-medium text-gray-900 truncate">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
           {image.originalName || image.filename}
         </p>
         {image.width && image.height && (
-          <p className="text-xs text-gray-500">{image.width} × {image.height}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{image.width} × {image.height}</p>
         )}
       </div>
     </div>

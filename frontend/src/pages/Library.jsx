@@ -430,14 +430,14 @@ function Library() {
   const activeUploads = pendingUploads.filter(p => !p.failed).length
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-6">
           <div className="flex items-baseline justify-between gap-4 mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Image Library</h1>
-            <p className="hidden sm:block text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Image Library</h1>
+            <p className="hidden sm:block text-sm text-gray-500 dark:text-gray-400">
               Tip: drag &amp; drop images anywhere on this page to upload
             </p>
           </div>
@@ -445,13 +445,13 @@ function Library() {
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search images..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -506,7 +506,7 @@ function Library() {
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 placeholder="https://example.com/image.jpg"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 autoFocus
                 disabled={uploading}
               />
@@ -523,7 +523,7 @@ function Library() {
                   setShowUrlInput(false)
                   setUrlInput('')
                 }}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
+                className="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600"
               >
                 Cancel
               </button>
@@ -537,7 +537,7 @@ function Library() {
                 ref={pasteAreaRef}
                 contentEditable
                 tabIndex={0}
-                className="w-full px-4 py-8 border-2 border-dashed border-blue-400 bg-blue-50 rounded-lg text-center text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-text"
+                className="w-full px-4 py-8 border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-center text-blue-600 dark:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-text"
               >
                 <Clipboard className="w-8 h-8 mx-auto mb-2" />
                 <p className="font-medium">Click here and press Ctrl+V (⌘+V on Mac)</p>
@@ -545,9 +545,9 @@ function Library() {
               </div>
               <button
                 onClick={() => setShowPasteArea(false)}
-                className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm hover:bg-gray-100"
+                className="absolute top-2 right-2 p-1 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                <X className="w-4 h-4 text-gray-600" />
+                <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
           )}
@@ -559,7 +559,7 @@ function Library() {
           </div>
         ) : filteredImages.length === 0 && pendingUploads.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
               {searchQuery ? 'No images found' : 'No images yet. Upload your first image!'}
             </p>
             {!searchQuery && (
@@ -577,11 +577,11 @@ function Library() {
             {pendingUploads.map((item) => (
               <div
                 key={item.key}
-                className={`relative bg-white rounded-lg border overflow-hidden ${
-                  item.failed ? 'border-red-400' : 'border-primary-300'
+                className={`relative bg-white dark:bg-gray-800 rounded-lg border overflow-hidden ${
+                  item.failed ? 'border-red-400' : 'border-primary-300 dark:border-primary-700'
                 }`}
               >
-                <div className="aspect-square bg-gray-100 overflow-hidden relative">
+                <div className="aspect-square bg-gray-100 dark:bg-gray-700 overflow-hidden relative">
                   <img
                     src={item.preview}
                     alt={item.name}
@@ -590,18 +590,18 @@ function Library() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     {item.failed ? (
                       <>
-                        <AlertCircle className="w-8 h-8 text-red-600" />
+                        <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
                         <div className="flex gap-2">
                           <button
                             onClick={() => retryUpload(item)}
-                            className="flex items-center gap-1 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded shadow hover:bg-gray-100"
+                            className="flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-xs font-medium rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700"
                             title="Retry upload"
                           >
                             <RotateCw className="w-3 h-3" /> Retry
                           </button>
                           <button
                             onClick={() => removePending(item.key)}
-                            className="p-1 bg-white text-gray-600 rounded shadow hover:bg-gray-100"
+                            className="p-1 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700"
                             title="Dismiss"
                           >
                             <X className="w-4 h-4" />
@@ -614,8 +614,8 @@ function Library() {
                   </div>
                 </div>
                 <div className="p-2">
-                  <p className="text-xs text-gray-700 truncate" title={item.name}>{item.name}</p>
-                  <p className={`text-xs mt-1 ${item.failed ? 'text-red-600' : 'text-primary-600'}`}>
+                  <p className="text-xs text-gray-700 dark:text-gray-300 truncate" title={item.name}>{item.name}</p>
+                  <p className={`text-xs mt-1 ${item.failed ? 'text-red-600 dark:text-red-400' : 'text-primary-600 dark:text-primary-400'}`}>
                     {item.failed ? 'Upload failed' : 'Uploading...'}
                   </p>
                 </div>
@@ -626,10 +626,10 @@ function Library() {
               <div
                 key={image.id}
                 {...bindPreview(image)}
-                className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                className="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow"
               >
                 {/* Image */}
-                <div className="aspect-square bg-gray-100 overflow-hidden">
+                <div className="aspect-square bg-gray-100 dark:bg-gray-700 overflow-hidden">
                   <img
                     src={image.thumbnailUrl || image.url}
                     alt={image.originalName}
@@ -642,24 +642,24 @@ function Library() {
 
                 {/* Info */}
                 <div className="p-2">
-                  <p className="text-xs text-gray-700 truncate" title={image.originalName}>
+                  <p className="text-xs text-gray-700 dark:text-gray-300 truncate" title={image.originalName}>
                     {image.originalName || image.filename}
                   </p>
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {image.width && image.height ? `${image.width} × ${image.height}` : ''}
                     </p>
                     {image.mimeType === 'image/webp' && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded font-medium">
                         WebP
                       </span>
                     )}
                   </div>
                   {image.size && (
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                       {formatFileSize(image.size)}
                       {getSavingsInfo(image) && (
-                        <span className="text-green-600 ml-1">
+                        <span className="text-green-600 dark:text-green-400 ml-1">
                           (↓{getSavingsInfo(image).percentage}%)
                         </span>
                       )}
@@ -709,10 +709,10 @@ function Library() {
       {/* Drag & drop overlay */}
       {isDragging && (
         <div className="fixed inset-0 z-40 pointer-events-none flex items-center justify-center bg-primary-600 bg-opacity-10 border-4 border-dashed border-primary-500">
-          <div className="flex flex-col items-center gap-2 px-8 py-6 bg-white rounded-xl shadow-lg">
-            <Upload className="w-10 h-10 text-primary-600" />
-            <p className="text-lg font-semibold text-gray-900">Drop images to upload</p>
-            <p className="text-sm text-gray-500">PNG, JPG, GIF or WebP up to 10 MB</p>
+          <div className="flex flex-col items-center gap-2 px-8 py-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+            <Upload className="w-10 h-10 text-primary-600 dark:text-primary-400" />
+            <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">Drop images to upload</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">PNG, JPG, GIF or WebP up to 10 MB</p>
           </div>
         </div>
       )}
@@ -729,7 +729,7 @@ function Library() {
       >
         <form onSubmit={submitAssignToSlot} className="space-y-4">
           <div>
-            <label htmlFor="slotNumber" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="slotNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Slot Number
             </label>
             <input
@@ -739,15 +739,15 @@ function Library() {
               value={slotNumber}
               onChange={(e) => setSlotNumber(e.target.value)}
               placeholder="Enter slot number (e.g., 1, 2, 3...)"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               autoFocus
               required
             />
           </div>
 
           {selectedImage && (
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">Image to assign:</p>
+            <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Image to assign:</p>
               <div className="flex items-center space-x-3">
                 <img
                   src={selectedImage.url}
@@ -756,16 +756,16 @@ function Library() {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {selectedImage.originalName || selectedImage.filename}
                     </p>
                     {selectedImage.mimeType === 'image/webp' && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium flex-shrink-0">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded font-medium flex-shrink-0">
                         WebP
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {selectedImage.width} × {selectedImage.height}
                     {selectedImage.size && ` • ${formatFileSize(selectedImage.size)}`}
                   </p>
@@ -782,7 +782,7 @@ function Library() {
                 setSelectedImage(null)
                 setSlotNumber('')
               }}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
             >
               Cancel
             </button>
@@ -809,7 +809,7 @@ function Library() {
       >
         <form onSubmit={submitRename} className="space-y-4">
           <div>
-            <label htmlFor="imageName" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="imageName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Image Name
             </label>
             <input
@@ -818,15 +818,15 @@ function Library() {
               value={newImageName}
               onChange={(e) => setNewImageName(e.target.value)}
               placeholder="Enter new image name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               autoFocus
               required
             />
           </div>
 
           {imageToRename && (
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">Preview:</p>
+            <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Preview:</p>
               <div className="flex items-center space-x-3">
                 <img
                   src={imageToRename.url}
@@ -834,18 +834,18 @@ function Library() {
                   className="w-16 h-16 object-cover rounded"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 mb-1">Current name:</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Current name:</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {imageToRename.originalName || imageToRename.filename}
                     </p>
                     {imageToRename.mimeType === 'image/webp' && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium flex-shrink-0">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded font-medium flex-shrink-0">
                         WebP
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {imageToRename.width} × {imageToRename.height}
                     {imageToRename.size && ` • ${formatFileSize(imageToRename.size)}`}
                   </p>
@@ -862,7 +862,7 @@ function Library() {
                 setImageToRename(null)
                 setNewImageName('')
               }}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
             >
               Cancel
             </button>

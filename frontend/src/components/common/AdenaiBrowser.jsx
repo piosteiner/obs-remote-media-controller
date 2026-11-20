@@ -57,21 +57,21 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search title, caption, tags…"
             aria-label="Search campaign images"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
         <select
           value={activeSet}
           onChange={(e) => chooseSet(e.target.value)}
           aria-label="Campaign"
-          className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
         >
           {data.projects.map((p) => <option key={p} value={p}>{label(p)}</option>)}
           <option value="">All campaigns</option>
@@ -80,7 +80,7 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
           value={category}
           onChange={(e) => { setCategory(e.target.value); setTags([]) }}
           aria-label="Category"
-          className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
         >
           <option value="">All categories</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -89,7 +89,7 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
           type="button"
           onClick={() => load(true)}
           title="Load the pictures again"
-          className="px-3 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50"
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           <RotateCw className="w-4 h-4" />
         </button>
@@ -106,10 +106,10 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
               className={`px-2.5 py-0.5 rounded-full text-xs border transition-colors ${
                 tags.includes(t)
                   ? 'bg-primary-600 border-primary-600 text-white'
-                  : 'bg-white border-gray-300 text-gray-700 hover:border-primary-400'
+                  : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-400'
               }`}
             >
-              {t} <span className={tags.includes(t) ? 'text-primary-100' : 'text-gray-400'}>{n}</span>
+              {t} <span className={tags.includes(t) ? 'text-primary-100' : 'text-gray-400 dark:text-gray-500'}>{n}</span>
             </button>
           ))}
         </div>
@@ -122,11 +122,11 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className="text-red-600 text-sm">Couldn’t load the campaigns’ pictures: {error}</p>
+            <p className="text-red-600 dark:text-red-400 text-sm">Couldn’t load the campaigns’ pictures: {error}</p>
           </div>
         ) : shown.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">No pictures match</p>
+            <p className="text-gray-500 dark:text-gray-400">No pictures match</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -138,8 +138,8 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
                 title={[image.originalName, image.tags.join(', ')].filter(Boolean).join(' — ')}
                 className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all ${
                   selectedKey === image.adenaiId
-                    ? 'border-primary-500 ring-2 ring-primary-200'
-                    : 'border-gray-200 hover:border-primary-300'
+                    ? 'border-primary-500 ring-2 ring-primary-200 dark:ring-primary-800'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600'
                 }`}
               >
                 <img
@@ -162,7 +162,7 @@ function AdenaiBrowser({ selectedKey, onPick, bindPreview }) {
           </div>
         )}
       </div>
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 dark:text-gray-500">
         {shown.length} of {images.length} images {activeSet ? `of ${label(activeSet)}` : 'of all campaigns'}, from the Grimoire’s image library — shown in the slot from there, not copied into this library.
       </p>
     </div>

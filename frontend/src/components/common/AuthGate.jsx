@@ -58,14 +58,14 @@ function AuthGate({ children, fallback }) {
   if (fallback !== undefined) return fallback
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
         <div className="flex items-center space-x-2">
-          <MonitorPlay className="w-8 h-8 text-primary-600" />
-          <span className="font-bold text-xl text-gray-900">OBS Media Controller</span>
+          <MonitorPlay className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+          <span className="font-bold text-xl text-gray-900 dark:text-gray-100">OBS Media Controller</span>
         </div>
         <div>
-          <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Admin key
           </label>
           <input
@@ -74,11 +74,11 @@ function AuthGate({ children, fallback }) {
             autoComplete="current-password"
             value={key}
             onChange={(e) => setKey(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             autoFocus
           />
-          {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
-          <p className="text-xs text-gray-500 mt-2">Only needed once per browser. OBS display pages work without it.</p>
+          {error && <p className="text-sm text-red-600 dark:text-red-400 mt-1">{error}</p>}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Only needed once per browser. OBS display pages work without it.</p>
         </div>
         <button
           type="submit"
@@ -88,8 +88,8 @@ function AuthGate({ children, fallback }) {
           <KeyRound className="w-4 h-4" />
           <span>{checking ? 'Checking...' : 'Unlock'}</span>
         </button>
-        <p className="text-xs text-center text-gray-500">
-          <a href="/privacy.html" className="hover:text-gray-700 underline">Privacy</a>
+        <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+          <a href="/privacy.html" className="hover:text-gray-700 dark:hover:text-gray-200 underline">Privacy</a>
         </p>
       </form>
     </div>

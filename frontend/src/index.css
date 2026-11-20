@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* dark mode: the page behind the controller's own backgrounds, and the browser's form fields and scrollbars dark too */
+html.dark { color-scheme: dark; }
+html.dark body { background-color: #111827; color: #f3f4f6; }
+/* form fields without a background class of their own: the cards' grey, not the browser's (:where — any class wins) */
+:where(html.dark) :where(input:not([type=checkbox], [type=radio], [type=range], [type=file]), select, textarea) { background-color: #1f2937; }
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
