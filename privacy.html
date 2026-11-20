@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy · OBS Media Controller</title>
-  <meta name="description" content="Privacy statement of the OBS Media Controller: no cookies, no tracking.">
+  <meta name="description" content="Privacy statement of the OBS Media Controller: no cookies, no tracking; the demo stays in your browser.">
   <style>
     :root { --bg: #f9fafb; --card: #ffffff; --ink: #111827; --muted: #6b7280; --rule: #e5e7eb; --accent: #2563eb; --code: #f3f4f6; color-scheme: light; }
     @media (prefers-color-scheme: dark) {
@@ -33,11 +33,13 @@
   <main>
     <a href="/">← OBS Media Controller</a>
     <h1>Privacy</h1>
-    <p class="updated">Last updated 17 October 2026</p>
+    <p class="updated">Last updated 20 November 2026 (the demo; all values kept in your browser listed)</p>
 
     <h2>In short</h2>
     <p>No cookies, no analytics, no advertising, no tracking. This is a personal tool for controlling what OBS Studio
-      shows during a stream or game session. The control pages need an admin key; without it you only see the key form.</p>
+      shows during a stream or game session. The control pages need an admin key. Without it you can try the
+      <strong>demo</strong>: it works the same, but everything you add stays in your browser and is never sent to our
+      server.</p>
 
     <h2>Who is responsible</h2>
     <p>Pio Gino Steiner, Switzerland · <a href="mailto:info@piogino.ch">info@piogino.ch</a><br>
@@ -57,22 +59,32 @@
         <tr><td>YouTube player and thumbnails, only when a video is used</td>
           <td>YouTube: Google Ireland Ltd. / Google LLC, USA (<a href="https://policies.google.com/privacy" target="_blank" rel="noopener">privacy policy</a>)</td>
           <td>Your IP address, the video shown and browser details. The player runs in YouTube's privacy-enhanced mode
-            (<code>youtube-nocookie.com</code>); YouTube may still store data in your browser once a video plays.</td></tr>
+            (<code>youtube-nocookie.com</code>); YouTube may still store data in your browser once a video plays. In the
+            demo your browser also asks YouTube for the video's title (otherwise our server does).</td></tr>
       </tbody>
     </table></div>
 
     <h2>Content you add</h2>
     <p>Images uploaded to the library and the scene setup are stored on our server in Switzerland, so they can be shown in
       OBS. Only holders of the admin key can add or delete them.</p>
+    <p>In the <strong>demo</strong> nothing is stored on our server: the pictures you add, the slots, scenes and the
+      player's list are kept only in your browser (see below), and other tabs of the same browser are told about changes
+      directly. “Delete demo data” in the demo removes all of it; so does clearing the site data in your browser.</p>
 
     <h2>Stored in your browser</h2>
-    <p>This site sets <strong>no cookies</strong>. It keeps two values in your browser's local storage:</p>
+    <p>This site sets <strong>no cookies</strong>. It keeps these values in your browser's local storage:</p>
     <ul>
       <li><code>obs-admin-key</code>: the admin key, once you have entered it, so you don't have to type it again</li>
       <li><code>obs-player-collapsed</code>: whether the player panel is folded away</li>
+      <li><code>obs-theme</code>: light or dark, once you have chosen</li>
+      <li><code>obs-rotation-seconds</code>, <code>obs-library-picker-source</code>, <code>obs-campaign-set</code>: the
+        seconds per image of the last rotation and which pictures the image picker showed last</li>
+      <li><code>obs-demo</code>: that you are trying the demo</li>
     </ul>
-    <p>The key is sent to our server with each control request to authorise it; the other value never leaves your
-      device. You can delete both by clearing the site data in your browser's settings.</p>
+    <p>In the demo, the pictures you add and the demo's slots, scenes, library and player are kept in your browser's
+      database (IndexedDB, <code>obs-demo</code>).</p>
+    <p>The key is sent to our server with each control request to authorise it; nothing else of this ever leaves your
+      device. You can delete all of it by clearing the site data in your browser's settings.</p>
 
     <h2>Data abroad</h2>
     <p>GitHub and Google are based in the USA, so your IP address and the request reach the USA when their services are
