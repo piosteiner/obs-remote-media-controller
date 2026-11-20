@@ -52,7 +52,7 @@ function MusicLibrary({ editRequest }) {
         : sort === 'sound' ? (sounds.indexOf(a.sound) - sounds.indexOf(b.sound)) || a.name.localeCompare(b.name)
           : a.name.localeCompare(b.name)))
   }, [tracks, q, f, sort, lib])
-  const filtering = q || f.sound || f.settings.length || f.moods.length
+  const filtering = !!(q || f.sound || f.settings.length || f.moods.length)
 
   const remove = async (t) => {
     if (!window.confirm(`Delete “${t.name}” from the library${isDemo() ? '' : ' (the Grimoire’s music section)'}?`)) return
@@ -100,7 +100,7 @@ function MusicLibrary({ editRequest }) {
           : !tracks.length ? <p className="text-sm text-gray-500 dark:text-gray-400">No links yet. Use “Save” on a link to keep it here.</p>
             : !shown.length ? <p className="text-sm text-gray-500 dark:text-gray-400">Nothing matches.</p>
               : (
-                <ul className="grid grid-cols-1 xl:grid-cols-2 gap-2 max-h-[70vh] overflow-y-auto pr-1">
+                <ul className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
                   {shown.map((t) => (
                     <li key={t.id} className="flex items-center gap-3 p-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
                       <img src={thumbnailFor(t.videoId)} alt="" loading="lazy" className="w-20 aspect-video object-cover rounded" />
