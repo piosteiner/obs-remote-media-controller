@@ -169,12 +169,13 @@ function PlayerOverlay() {
   // Leave room at the bottom of the page so content can scroll out from under the player
   useEffect(() => {
     if (!current) return
-    const { paddingBottom, backgroundColor } = document.body.style
+    const { paddingBottom } = document.body.style
     document.body.style.paddingBottom = collapsed ? '120px' : '330px'
-    document.body.style.backgroundColor = '#f9fafb' // match the pages' gray-50 below their content
+    // below the pages' content: their own background, light or dark (index.css: body.with-player)
+    document.body.classList.add('with-player')
     return () => {
       document.body.style.paddingBottom = paddingBottom
-      document.body.style.backgroundColor = backgroundColor
+      document.body.classList.remove('with-player')
     }
   }, [current, collapsed])
 
