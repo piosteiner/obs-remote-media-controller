@@ -10,7 +10,7 @@ export default defineConfig({
   workers: 1, // one server, one state
   reporter: [['list']],
   outputDir: 'test/e2e/.results',
-  use: { baseURL: 'http://localhost:4175', ...devices['Desktop Chrome'], viewport: { width: 1280, height: 1000 } },
+  use: { baseURL: 'http://localhost:4192', ...devices['Desktop Chrome'], viewport: { width: 1280, height: 1000 } },
   webServer: [
     {
       command: 'node test/e2e/test-backend.cjs',
@@ -20,8 +20,8 @@ export default defineConfig({
       stderr: 'pipe',
     },
     {
-      command: 'npx vite build --mode e2e --outDir dist-e2e --emptyOutDir && npx vite preview --mode e2e --outDir dist-e2e --port 4175 --strictPort',
-      url: 'http://localhost:4175',
+      command: 'npx vite build --mode e2e --outDir dist-e2e --emptyOutDir && npx vite preview --mode e2e --outDir dist-e2e --port 4192 --strictPort',
+      url: 'http://localhost:4192',
       reuseExistingServer: false,
       timeout: 180000,
       stdout: 'ignore',
