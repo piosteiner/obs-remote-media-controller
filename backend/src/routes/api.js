@@ -13,6 +13,9 @@ router.get('/auth/check', requireApiKey, (req, res) => {
   res.json({ success: true });
 });
 
+// the Adenai map's pictures, passed on (routes/adenaiMedia.js)
+router.use('/adenai-media', require('./adenaiMedia').router);
+
 router.use(requireApiKeyForWrites);
 
 router.use('/slots', wrapAsyncRoutes(slotsRoutes));

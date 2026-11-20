@@ -55,7 +55,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
   const handleSelect = () => {
     if (selectedImage) {
       onSelect(selectedImage.adenaiId
-        ? { url: selectedImage.url, thumbnailUrl: selectedImage.thumbnailUrl, originalName: selectedImage.originalName }
+        ? { url: selectedImage.url, thumbnailUrl: selectedImage.thumbnailUrl.replace(/\?t=.*$/, ''), originalName: selectedImage.originalName } // the picking token is not stored: the slots are public
         : selectedImage)
       onClose()
       setSelectedImage(null)
