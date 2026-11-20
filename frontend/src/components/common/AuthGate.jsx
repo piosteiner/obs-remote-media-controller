@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import { MonitorPlay, KeyRound } from 'lucide-react'
+import { MonitorPlay, KeyRound, FlaskConical } from 'lucide-react'
+import { isDemo, enterDemo } from '../../demo/mode'
 import { systemAPI } from '../../services/api'
 import { getApiKey, setApiKey } from '../../services/auth'
 import websocketService from '../../services/websocket'
 
 /**
  * AuthGate Component
- * Asks for the admin key once per browser before showing the control pages
+ * Asks for the admin key once per browser before showing the control pages — or opens the demo (demo/mode.js),
+ * which needs no key: everything in it stays in the browser
  */
 function AuthGate({ children, fallback }) {
   const [hasKey, setHasKey] = useState(() => !!getApiKey())
@@ -53,7 +55,7 @@ function AuthGate({ children, fallback }) {
     }
   }
 
-  if (hasKey) return children
+  if (hasKey || isDemo()) return children
   // Used where a second key form would be redundant (e.g. the player overlay)
   if (fallback !== undefined) return fallback
 
@@ -88,6 +90,17 @@ function AuthGate({ children, fallback }) {
           <KeyRound className="w-4 h-4" />
           <span>{checking ? 'Checking...' : 'Unlock'}</span>
         </button>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
+          <button
+            type="button"
+            onClick={enterDemo}
+            className="w-full flex items-center justify-center space-x-2 px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            <FlaskConical className="w-4 h-4" />
+            <span>Try the demo</span>
+          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-400">No key needed: everything you add stays in this browser and is never sent to the server.</p>
+        </div>
         <p className="text-xs text-center text-gray-500 dark:text-gray-400">
           <a href="/privacy.html" className="hover:text-gray-700 dark:hover:text-gray-200 underline">Privacy</a>
         </p>

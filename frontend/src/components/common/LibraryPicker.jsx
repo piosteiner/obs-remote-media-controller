@@ -4,6 +4,7 @@ import { imagesAPI } from '../../services/api'
 import Modal from '../common/Modal'
 import { useImageHoverPreview, ImageHoverPreview } from './ImageHoverPreview'
 import AdenaiBrowser from './AdenaiBrowser'
+import { isDemo } from '../../demo/mode'
 
 const SOURCE_KEY = 'obs-library-picker-source'
 const savedSource = () => { try { return localStorage.getItem(SOURCE_KEY) || 'library' } catch { return 'library' } }
@@ -16,7 +17,7 @@ const keyOf = (img) => img?.adenaiId || img?.id
  * is passed on without an id (it is not in this library), with its address, as an image from a URL is
  */
 function LibraryPicker({ isOpen, onClose, onSelect }) {
-  const [source, setSource] = useState(savedSource)
+  const [source, setSource] = useState(isDemo() ? 'library' : savedSource) // the demo has no campaigns
   const chooseSource = (s) => { setSource(s); setSelectedImage(null); try { localStorage.setItem(SOURCE_KEY, s) } catch { /* private mode */ } }
   const [images, setImages] = useState([])
   const [loading, setLoading] = useState(false)
@@ -80,7 +81,7 @@ function LibraryPicker({ isOpen, onClose, onSelect }) {
         <div className="space-y-4">
           {/* Source: this library or the Adenai map's */}
           <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700" role="tablist">
-            {[['library', 'OBS library'], ['adenai', 'Campaigns']].map(([id, label]) => (
+            {[['library', 'OBS library'], ...(isDemo() ? [] : [['adenai', 'Campaigns']])].map(([id, label]) => (
               <button
                 key={id}
                 type="button"

@@ -1,5 +1,7 @@
 import axios from 'axios'
 import { getApiKey, clearApiKey } from './auth'
+import { isDemo } from '../demo/mode'
+import { demoAdapter } from '../demo/server'
 
 // Get backend API URL from environment or default to proxy in dev
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -10,6 +12,8 @@ const api = axios.create({
     ? `${API_BASE_URL}/api`
     : '/api',
   timeout: 10000,
+  // the demo: answered in this browser, nothing sent (demo/server.js)
+  ...(isDemo() ? { adapter: demoAdapter } : {}),
   headers: {
     'Content-Type': 'application/json',
   },

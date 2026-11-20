@@ -2,6 +2,8 @@ import { io } from 'socket.io-client'
 import useStore from '../store'
 import { getApiKey } from './auth'
 import { slotsAPI } from './api'
+import { isDemo } from '../demo/mode'
+import { demoSocket } from '../demo/socket'
 
 class WebSocketService {
   constructor() {
@@ -14,6 +16,13 @@ class WebSocketService {
   connect() {
     // Several pages and the player overlay call this; keep a single socket
     if (this.socket) return
+
+    // the demo: no server — its stand-in in this browser (demo/socket.js)
+    if (isDemo()) {
+      this.socket = demoSocket()
+      this.setupListeners()
+      return
+    }
 
     // Get backend URL from environment
     const backendURL = import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_BASE_URL

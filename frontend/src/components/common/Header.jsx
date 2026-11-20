@@ -38,7 +38,7 @@ function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <MonitorPlay className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-            <span className="font-bold text-xl text-gray-900 dark:text-gray-100">
+            <span className="hidden md:inline font-bold text-xl text-gray-900 dark:text-gray-100">
               OBS Media Controller
             </span>
           </Link>
@@ -54,7 +54,7 @@ function Header() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
                       ? 'bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'

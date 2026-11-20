@@ -5,6 +5,9 @@ Made for running tabletop sessions: prepare a session's images, then switch betw
 without the players being distracted by sudden changes.
 
 - **Controller:** [obs-media-control.piogino.ch](https://obs-media-control.piogino.ch) (needs the admin key)
+- **Demo:** "Try the demo" on the key form — everything works without the key, but stays in that browser
+  (IndexedDB; `frontend/src/demo`, answering in place of the server with the same rules from `shared/`). A display
+  page with `&demo=1` in another tab follows it like OBS would.
 - **API:** `https://api.piogino.ch/obs/api` — reading is open, changing needs the key
 
 ## What it does

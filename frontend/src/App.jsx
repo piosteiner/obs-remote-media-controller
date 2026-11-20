@@ -8,6 +8,8 @@ import Player from './pages/Player'
 import ToastContainer from './components/common/ToastContainer'
 import AuthGate from './components/common/AuthGate'
 import PlayerOverlay from './components/player/PlayerOverlay'
+import DemoBanner from './components/common/DemoBanner'
+import { isDemo } from './demo/mode'
 
 function App() {
   // OBS display pages stay clean; every control page gets the shared player
@@ -15,6 +17,7 @@ function App() {
 
   return (
     <>
+      {isDemo() && !isDisplay && <DemoBanner />}
       <Routes>
         <Route path="/display" element={<Display />} />
         <Route path="/control" element={<AuthGate><Control /></AuthGate>} />

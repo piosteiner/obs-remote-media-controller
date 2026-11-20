@@ -1,6 +1,7 @@
 const path = require('path');
-const crypto = require('crypto');
 const storage = require('./storage');
+// the rules (timeline, queue, repeat) are shared with the browser demo
+const { REPEAT_MODES, defaultState, newId, parseVideoId, currentPosition, startVideo, advance } = require('../../../shared/player.mjs');
 
 // Shared YouTube player. The server owns the timeline: clients play
 // `current.videoId` at position + (now - updatedAt) while `playing`, so every
@@ -8,43 +9,10 @@ const storage = require('./storage');
 // the queue when a video ends, so it works with any number of open clients.
 
 const playerFile = path.join(storage.dataDir, 'player.json');
-const REPEAT_MODES = ['off', 'one', 'all'];
 const END_GRACE_MS = 750;
-
-const defaultState = () => ({
-  current: null,      // { sessionId, videoId, title, duration }
-  playing: false,
-  position: 0,        // seconds at updatedAt
-  updatedAt: Date.now(),
-  repeat: 'off',
-  queue: [],          // [{ id, videoId, title }]
-  saved: []           // [{ id, name, videoId, title }]
-});
 
 let io = null;
 let endTimer = null;
-
-const newId = () => crypto.randomBytes(6).toString('hex');
-
-// Accepts watch/short/embed/live/youtu.be links or a bare 11-character id
-function parseVideoId(input) {
-  const value = String(input || '').trim();
-  if (/^[\w-]{11}$/.test(value)) return value;
-  let url;
-  try {
-    url = new URL(value.startsWith('http') ? value : `https://${value}`);
-  } catch {
-    return null;
-  }
-  const host = url.hostname.replace(/^(www\.|m\.|music\.)/, '');
-  let id = null;
-  if (host === 'youtu.be') id = url.pathname.slice(1);
-  else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
-    id = url.searchParams.get('v') ||
-      url.pathname.match(/^\/(?:shorts|embed|live|v)\/([\w-]{11})/)?.[1];
-  }
-  return id && /^[\w-]{11}$/.test(id.slice(0, 11)) ? id.slice(0, 11) : null;
-}
 
 // Title via YouTube oEmbed (no API key needed); falls back to the id
 async function fetchTitle(videoId) {
@@ -60,45 +28,7 @@ async function fetchTitle(videoId) {
   }
 }
 
-function currentPosition(state, now = Date.now()) {
-  if (!state.current) return 0;
-  const position = state.position + (state.playing ? (now - state.updatedAt) / 1000 : 0);
-  const duration = state.current.duration;
-  return Math.max(0, duration ? Math.min(position, duration) : position);
-}
-
 const publicState = (state) => ({ ...state, serverTime: Date.now() });
-
-function startVideo(state, item) {
-  state.current = { sessionId: newId(), videoId: item.videoId, title: item.title, duration: null };
-  state.playing = true;
-  state.position = 0;
-  state.updatedAt = Date.now();
-}
-
-// Called when the current video reaches its end
-function advance(state) {
-  if (!state.current) return;
-  if (state.repeat === 'one') {
-    startVideo(state, state.current);
-    return;
-  }
-  const finished = state.current;
-  const next = state.queue.shift();
-  if (state.repeat === 'all') {
-    state.queue.push({ id: newId(), videoId: finished.videoId, title: finished.title });
-  }
-  if (next) {
-    startVideo(state, next);
-  } else if (state.repeat === 'all') {
-    startVideo(state, state.queue.shift());
-  } else {
-    // Nothing left: stay on the finished video, paused at the start
-    state.playing = false;
-    state.position = 0;
-    state.updatedAt = Date.now();
-  }
-}
 
 function scheduleEnd(state) {
   clearTimeout(endTimer);

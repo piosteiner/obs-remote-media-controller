@@ -7,6 +7,8 @@ export default defineConfig({
   base: '/', // For GitHub Pages at root domain
   server: {
     port: 5173,
+    // the rules shared with the server (../shared) are imported by the demo
+    fs: { allow: ['..'] },
     proxy: {
       // Proxy to backend during local development
       '/api': {
